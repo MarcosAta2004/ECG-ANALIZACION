@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import fastapi, uvicorn; print\\('ok'\\)\")",
+      "Bash(python -c ':*)",
+      "Bash(echo \"\")",
+      "Bash(echo \"ECG_API_URL=http://localhost:8000\")",
+      "Bash(python -c \"from pdf2image import convert_from_path; print\\('pdf2image OK'\\)\")",
+      "Bash(python -c \"import cv2, numpy, scipy, tensorflow; print\\('dependencias OK'\\)\")",
+      "Bash(where pdftoppm:*)",
+      "Bash(where pdfinfo:*)",
+      "Bash(php -r \"require 'vendor/autoload.php'; echo class_exists\\('GuzzleHttp\\\\Client'\\) ? 'guzzle OK' : 'sin guzzle';\")",
+      "Bash(php artisan:*)"
+    ]
+  }
+}

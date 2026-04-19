@@ -1,0 +1,34 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local tools / binaries
+ngrok.exe
+
+# Python backend
+backend/__pycache__/
+backend/*.py[cod]
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/.ipynb_checkpoints/
+backend/.venv/
+backend/venv/
+backend/env/
+backend/.env
+
+# Generated backend artifacts
+backend/rois_detectados.png
+
+# Laravel / Node frontend
+Frontend/.env
+Frontend/node_modules/
+Frontend/vendor/
+Frontend/public/build/
+Frontend/public/hot
+Frontend/public/storage/
+Frontend/storage/*.key
+Frontend/storage/pail/
+Frontend/storage/logs/*.log
