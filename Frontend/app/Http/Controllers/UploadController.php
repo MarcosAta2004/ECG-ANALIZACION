@@ -6,6 +6,7 @@ use App\Models\EcgAnalysis;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
 
 class UploadController extends Controller
@@ -34,6 +35,10 @@ class UploadController extends Controller
 
         try {
             $file = $request->file('file');
+            $generatedFilename = Carbon::now()->format('Ymd') . '-' . random_int(100000, 999999) . '.pdf';
+            do {
+                $patientIdentifier = 'PACIENTE_' . random_int(100000, 999999);
+            } while (EcgAnalysis::where('patient_identifier', $patientIdentifier)->exists());
 
             $response = $client->post("{$apiUrl}/predict", [
                 'multipart' => [
@@ -61,25 +66,19 @@ class UploadController extends Controller
 
         if ($userId) {
             $isNormal = str_contains(strtolower($data['label'] ?? ''), 'normal');
-
-            // Aplicar el mismo ajuste visual que el frontend:
-            // si la confianza real es menor al 85 %, guardar un valor aleatorio 85-97
-            // TODO: eliminar cuando el modelo esté re-entrenado/calibrado
             $confidence = (float) ($data['confidence'] ?? 0);
-            $displayConf = $confidence >= 85.0
-                ? $confidence
-                : round(85.0 + (mt_rand(0, 120) / 10), 1);
 
             EcgAnalysis::create([
                 'user_id'         => $userId,
-                'filename'        => $file->getClientOriginalName(),
+                'filename'        => $generatedFilename,
+                'patient_identifier' => $patientIdentifier,
                 'patient_age'     => $request->age,
                 'patient_sex'     => $request->sex,
                 'patient_weight'  => $request->weight,
                 'label'           => $data['label']       ?? 'Desconocido',
                 'label_code'      => $data['top_predictions'][0]['code'] ?? 'NORM',
                 'type'            => $isNormal ? 'normal' : 'arritmia',
-                'confidence'      => $displayConf,
+                'confidence'      => $confidence,
                 'top_predictions' => $data['top_predictions'] ?? [],
             ]);
         }

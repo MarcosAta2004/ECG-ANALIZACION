@@ -4,10 +4,10 @@
 
 @section('page-header')
     <h1 class="text-2xl lg:text-3xl font-bold animate-fade-in">
-        Bienvenido, <span class="gradient-text">{{ session('user.name') }}</span>
+        <span class="gradient-text">Resumen general</span>
     </h1>
     <p class="text-muted-foreground mt-1 animate-fade-in-delay-1">
-        Resumen del sistema de análisis ECG
+        Vista consolidada de los analisis ECG y la actividad reciente del sistema.
     </p>
 @endsection
 
@@ -21,8 +21,16 @@
 
 @section('content')
 <div class="space-y-8">
+    @php
+        $statsCount = count($stats);
+        $statsGridClass = match (true) {
+            $statsCount >= 4 => 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6',
+            $statsCount === 3 => 'grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6',
+            $statsCount === 2 => 'grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6',
+            default => 'grid grid-cols-1 gap-4 lg:gap-6',
+        };
+    @endphp
 
-    {{-- Tarjetas de estadísticas --}}
     <section>
         <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary"
@@ -30,25 +38,24 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            Resumen Estadístico
+            Resumen Estadistico
         </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div class="{{ $statsGridClass }}">
             @foreach($stats as $i => $stat)
-                <div class="card animate-fade-in-up group" style="animation-delay:{{ $i * 100 }}ms;">
+                <div class="card animate-fade-in-up group h-full min-h-[188px]" style="animation-delay:{{ $i * 100 }}ms;">
                     <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"
                          style="background:linear-gradient(to bottom right,hsl(var(--primary)/0.05),transparent);"></div>
-                    <div class="relative flex items-start justify-between">
-                        <div class="space-y-2">
+                    <div class="relative flex items-start justify-between gap-4 h-full">
+                        <div class="space-y-2 flex-1">
                             <p class="text-sm text-muted-foreground font-medium">{{ $stat['title'] }}</p>
                             <p class="text-3xl font-bold tracking-tight">{{ $stat['value'] }}</p>
                             <p class="text-sm text-muted-foreground">{{ $stat['subtitle'] }}</p>
-                            <div class="inline-flex items-center gap-1 text-sm font-medium
-                                        {{ $stat['trend'] === 'up' ? 'text-success' : ($stat['trend'] === 'down' ? 'text-destructive' : 'text-muted-foreground') }}">
-                                <span>{{ $stat['trend'] === 'up' ? '↑' : ($stat['trend'] === 'down' ? '↓' : '→') }}</span>
+                            <div class="inline-flex items-center gap-1 text-sm font-medium {{ $stat['trend'] === 'up' ? 'text-success' : ($stat['trend'] === 'down' ? 'text-destructive' : 'text-muted-foreground') }}">
+                                <span>{!! $stat['trend'] === 'up' ? '&uarr;' : ($stat['trend'] === 'down' ? '&darr;' : '&rarr;') !!}</span>
                                 <span>{{ $stat['trend_value'] }}</span>
                             </div>
                         </div>
-                        <div class="p-3 rounded-xl" style="background:hsl(var(--primary)/0.1);">
+                        <div class="p-3 rounded-xl shrink-0 self-start" style="background:hsl(var(--primary)/0.1);">
                             @if($stat['icon'] === 'file-heart')
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary"
                                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,10 +92,7 @@
         </div>
     </section>
 
-    {{-- Actividad reciente + acciones rápidas --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {{-- Actividad reciente --}}
         <section class="lg:col-span-2 animate-fade-in-up" style="animation-delay:400ms;">
             <div class="card">
                 <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -120,7 +124,6 @@
             </div>
         </section>
 
-        {{-- Acciones rápidas --}}
         <section class="animate-fade-in-up" style="animation-delay:500ms;">
             <div class="card h-full">
                 <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -129,7 +132,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M2 12h2l2-7 3 14 3-10 2 3h4l2-4 2 4h2" />
                     </svg>
-                    Acciones Rápidas
+                    Acciones Rapidas
                 </h2>
                 <div class="space-y-3">
                     <a href="{{ route('upload') }}"
@@ -147,7 +150,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="font-medium">Nuevo Análisis</p>
+                                <p class="font-medium">Nuevo Analisis</p>
                                 <p class="text-xs text-muted-foreground">Subir archivo ECG</p>
                             </div>
                         </div>
@@ -183,7 +186,7 @@
                             </div>
                             <div>
                                 <p class="font-medium text-muted-foreground">Multi-usuario</p>
-                                <p class="text-xs text-muted-foreground">Próximamente</p>
+                                <p class="text-xs text-muted-foreground">Proximamente</p>
                             </div>
                         </div>
                     </div>
@@ -191,8 +194,5 @@
             </div>
         </section>
     </div>
-
-    {{-- Indicador Red Neuronal (deshabilitado temporalmente) --}}
-
 </div>
 @endsection

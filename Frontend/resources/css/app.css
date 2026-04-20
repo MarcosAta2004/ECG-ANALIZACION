@@ -132,12 +132,14 @@ h1,h2,h3,h4,h5,h6 { font-weight: 600; letter-spacing: -0.025em; }
 /* ── Inputs ── */
 .input-field {
     width: 100%;
+    min-height: 3rem;
     padding: 0.75rem 1rem;
     border-radius: var(--radius);
     background: hsl(var(--background) / 0.5);
     border: 1px solid hsl(var(--input));
     color: hsl(var(--foreground));
     font-size: 0.875rem;
+    line-height: 1.25rem;
     outline: none;
     transition: box-shadow 0.2s, border-color 0.2s;
     font-family: inherit;
@@ -145,6 +147,39 @@ h1,h2,h3,h4,h5,h6 { font-weight: 600; letter-spacing: -0.025em; }
 .input-field:focus { box-shadow: 0 0 0 2px hsl(var(--ring)); border-color: transparent; }
 .input-field::placeholder { color: hsl(var(--muted-foreground)); }
 .input-field:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.input-with-icon {
+    position: relative;
+    display: block;
+}
+
+.input-with-icon .input-field {
+    display: block;
+    padding-left: 3rem;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    max-width: 1.25rem !important;
+    max-height: 1.25rem !important;
+    color: hsl(var(--muted-foreground));
+    stroke: currentColor;
+    pointer-events: none;
+    flex: none;
+    display: block;
+    overflow: visible;
+    z-index: 10;
+}
+
+.input-with-icon > .input-icon {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+}
 
 /* ── Sidebar ── */
 .sidebar {

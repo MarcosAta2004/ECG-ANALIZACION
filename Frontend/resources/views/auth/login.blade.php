@@ -60,9 +60,11 @@
                     <label for="email" class="block text-sm font-medium text-foreground mb-2">
                         Correo electrónico
                     </label>
-                    <div class="relative">
+                    <div class="input-with-icon">
                         <svg xmlns="http://www.w3.org/2000/svg"
-                             class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
+                             class="input-icon"
+                             width="20" height="20"
+                             aria-hidden="true"
                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7
@@ -71,7 +73,7 @@
                         <input id="email" name="email" type="email"
                                value="{{ old('email') }}"
                                placeholder="doctor@hospital.com"
-                               class="input-field pl-10"
+                               class="input-field"
                                :disabled="loading"
                                autocomplete="email" />
                     </div>
@@ -85,9 +87,11 @@
                     <label for="password" class="block text-sm font-medium text-foreground mb-2">
                         Contraseña
                     </label>
-                    <div class="relative">
+                    <div class="input-with-icon">
                         <svg xmlns="http://www.w3.org/2000/svg"
-                             class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
+                             class="input-icon"
+                             width="20" height="20"
+                             aria-hidden="true"
                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6
@@ -95,7 +99,7 @@
                         </svg>
                         <input id="password" name="password" type="password"
                                placeholder="••••••••"
-                               class="input-field pl-10"
+                               class="input-field"
                                :disabled="loading"
                                autocomplete="current-password" />
                     </div>

@@ -9,6 +9,7 @@ class EcgAnalysis extends Model
     protected $fillable = [
         'user_id',
         'filename',
+        'patient_identifier',
         'patient_age',
         'patient_sex',
         'patient_weight',

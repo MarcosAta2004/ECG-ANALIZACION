@@ -40,11 +40,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-primary animate-heartbeat"
                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                              d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945
-                                 M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0
-                                 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                              d="M2 12h2l2-7 3 14 3-10 2 3h4" />
+                              d="M2 12h2l2-7 3 14 3-10 2 3h4l2-4 2 4h2" />
                     </svg>
                     <div class="absolute inset-0 rounded-full"
                          style="background:hsl(var(--primary)/0.2);filter:blur(12px);"></div>
@@ -69,7 +65,7 @@
                     ['title' => 'Dashboard',           'route' => 'dashboard', 'icon' => 'chart'],
                     ['title' => 'Resumen',             'route' => 'resumen',   'icon' => 'home'],
                     ['title' => 'Subir ECG',           'route' => 'upload',    'icon' => 'upload'],
-                    ['title' => 'Historial / Reportes','route' => 'history',   'icon' => 'file-text'],
+                    ['title' => 'Historial','route' => 'history',   'icon' => 'file-text'],
                 ];
             @endphp
 
@@ -82,8 +78,9 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0"
                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                            <polyline points="9 22 9 12 15 12 15 22" />
+                                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-2" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 3h6v4H9zM9 12h6M9 16h4" />
                         </svg>
                     @elseif($item['icon'] === 'upload')
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0"

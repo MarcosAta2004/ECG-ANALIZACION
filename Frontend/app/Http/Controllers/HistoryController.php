@@ -8,17 +8,47 @@ use Illuminate\Support\Facades\Session;
 
 class HistoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:120'],
+            'filter' => ['nullable', 'in:all,normal,arritmia,reviewed,unreviewed'],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
         $userId = Session::get('user.id');
+        $search = trim((string) ($validated['search'] ?? ''));
+        $filter = $validated['filter'] ?? 'all';
 
-        $rows = EcgAnalysis::where('user_id', $userId)
+        $query = EcgAnalysis::query()
+            ->where('user_id', $userId);
+
+        if ($search !== '') {
+            $query->where(function ($innerQuery) use ($search) {
+                $innerQuery
+                    ->where('filename', 'like', '%' . $search . '%')
+                    ->orWhere('patient_identifier', 'like', '%' . $search . '%')
+                    ->orWhere('label', 'like', '%' . $search . '%')
+                    ->orWhere('doctor_label', 'like', '%' . $search . '%');
+            });
+        }
+
+        match ($filter) {
+            'normal', 'arritmia' => $query->where('type', $filter),
+            'reviewed' => $query->whereNotNull('doctor_result'),
+            'unreviewed' => $query->whereNull('doctor_result'),
+            default => null,
+        };
+
+        $rows = $query
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(12)
+            ->withQueryString();
 
-        $history = $rows->map(fn($r) => [
+        $history = $rows->through(fn ($r) => [
             'id'            => $r->id,
             'filename'      => $r->filename,
+            'patient'       => $r->patient_identifier,
             'date'          => $r->created_at->format('Y-m-d'),
             'time'          => $r->created_at->format('H:i'),
             'result'        => $r->type === 'normal' ? 'Normal' : 'Arritmia',
@@ -29,9 +59,22 @@ class HistoryController extends Controller
             'doctor_label'  => $r->doctor_label,
             'doctor_notes'  => $r->doctor_notes,
             'reviewed_at'   => $r->reviewed_at?->format('Y-m-d H:i'),
-        ])->values()->toArray();
+        ]);
 
-        return view('history', compact('history'));
+        $statsBaseQuery = EcgAnalysis::query()->where('user_id', $userId);
+        $stats = [
+            'total' => (clone $statsBaseQuery)->count(),
+            'normales' => (clone $statsBaseQuery)->where('type', 'normal')->count(),
+            'revisados' => (clone $statsBaseQuery)->whereNotNull('doctor_result')->count(),
+        ];
+        $stats['arritmias'] = $stats['total'] - $stats['normales'];
+
+        $filters = [
+            'search' => $search,
+            'filter' => $filter,
+        ];
+
+        return view('history', compact('history', 'stats', 'filters'));
     }
 
     /**
