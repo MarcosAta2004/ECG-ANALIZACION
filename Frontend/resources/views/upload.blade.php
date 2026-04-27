@@ -77,7 +77,7 @@
 
             <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-muted-foreground mb-1">Edad (anos)</label>
+                    <label class="block text-sm font-medium text-muted-foreground mb-1">Edad (años)</label>
                     <input type="number" x-model.number="patientAge" min="0" max="120" step="1" class="input-field" placeholder="Ej: 45" />
                 </div>
                 <div>

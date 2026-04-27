@@ -18,6 +18,10 @@
 
 @section('header-actions')
     <div class="flex items-center gap-2 animate-fade-in-delay-2">
+        <a href="{{ route('dashboard.statistics.pdf', array_filter(['from' => $filters['from'], 'to' => $filters['to']])) }}"
+           class="btn-primary text-sm py-2 px-3">
+            Descargar estadisticas
+        </a>
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono"
              style="background: hsl(var(--primary)/0.1); border: 1px solid hsl(var(--primary)/0.3); color: hsl(var(--primary));">
             <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background: hsl(var(--primary));"></span>

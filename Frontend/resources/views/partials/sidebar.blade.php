@@ -66,6 +66,7 @@
                     ['title' => 'Resumen',             'route' => 'resumen',   'icon' => 'home'],
                     ['title' => 'Subir ECG',           'route' => 'upload',    'icon' => 'upload'],
                     ['title' => 'Historial','route' => 'history',   'icon' => 'file-text'],
+                    ['title' => 'Reportes',            'route' => 'reports',   'icon' => 'report'],
                 ];
             @endphp
 
@@ -95,6 +96,14 @@
                                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2
                                      a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14
                                      a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    @elseif($item['icon'] === 'report')
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0"
+                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 17h6M9 13h6m-6-4h3m5 12H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M14 3v5h5" />
                         </svg>
                     @else
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0"
