@@ -26,11 +26,8 @@
         <div class="relative mb-6 border-b border-border pb-5 text-center">
             <div class="mx-auto max-w-xl">
                 <h2 class="text-xl font-bold tracking-wide text-foreground">IMPORTANTE</h2>
-                <p class="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                    Aviso clinico del sistema
-                </p>
                 <p class="text-sm leading-6 text-muted-foreground mt-3">
-                    El sistema ayuda a apoyar la lectura del ECG, pero no sustituye la decision clinica final.
+                    El sistema ayuda a apoyar la lectura del ECG, pero no sustituye la decisión clínica final.
                 </p>
             </div>
 
@@ -47,23 +44,23 @@
         <ol class="mx-auto max-w-xl space-y-4 text-sm leading-7 text-muted-foreground text-justify">
             <li>
                 <span class="font-semibold text-foreground">1.</span>
-                Este sistema utiliza tecnicas de inteligencia artificial, especificamente redes neuronales, para analizar electrocardiogramas (ECG) y apoyar en la clasificacion de posibles arritmias cardiacas.
+                Este sistema utiliza técnicas de inteligencia artificial, específicamente redes neuronales, para analizar electrocardiogramas (ECG) y apoyar en la clasificación de posibles arritmias cardíacas.
             </li>
             <li>
                 <span class="font-semibold text-foreground">2.</span>
-                El modelo ha sido entrenado con un conjunto de datos clinicos previamente etiquetados (PTB-XL), lo que le permite reconocer patrones en senales ECG y sugerir una posible clasificacion.
+                El modelo ha sido entrenado con un conjunto de datos clínicos previamente etiquetados (PTB-XL), lo que le permite reconocer patrones en señales ECG y sugerir una posible clasificación.
             </li>
             <li>
                 <span class="font-semibold text-foreground">3.</span>
-                Este sistema es una herramienta de apoyo y puede presentar errores; los resultados deben ser siempre interpretados por un medico especialista.
+                Este sistema es una herramienta de apoyo y puede presentar errores; los resultados deben ser siempre interpretados por un médico especialista.
             </li>
             <li>
                 <span class="font-semibold text-foreground">4.</span>
-                Esta orientado a apoyar al personal de salud en la evaluacion preliminar de electrocardiogramas y agilizar el proceso de analisis.
+                Está orientado a apoyar al personal de salud en la evaluación preliminar de electrocardiogramas y agilizar el proceso de análisis.
             </li>
             <li>
                 <span class="font-semibold text-foreground">5.</span>
-                Este sistema forma parte de un proyecto de investigacion academica sobre el uso de redes neuronales en el diagnostico de arritmias cardiacas.
+                Este sistema forma parte de un proyecto de investigación académica sobre el uso de redes neuronales en el diagnóstico de arritmias cardíacas.
             </li>
         </ol>
 
