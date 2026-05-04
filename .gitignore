@@ -7,28 +7,28 @@ Thumbs.db
 # Local tools / binaries
 ngrok.exe
 
-# Python backend
-backend/__pycache__/
-backend/*.py[cod]
-backend/.pytest_cache/
-backend/.mypy_cache/
-backend/.ruff_cache/
-backend/.ipynb_checkpoints/
-backend/.venv/
-backend/venv/
-backend/env/
-backend/.env
+# Python model API
+modelo/__pycache__/
+modelo/*.py[cod]
+modelo/.pytest_cache/
+modelo/.mypy_cache/
+modelo/.ruff_cache/
+modelo/.ipynb_checkpoints/
+modelo/.venv/
+modelo/venv/
+modelo/env/
+modelo/.env
 
-# Generated backend artifacts
-backend/rois_detectados.png
+# Generated model artifacts
+modelo/rois_detectados.png
 
-# Laravel / Node frontend
-Frontend/.env
-Frontend/node_modules/
-Frontend/vendor/
-Frontend/public/build/
-Frontend/public/hot
-Frontend/public/storage/
-Frontend/storage/*.key
-Frontend/storage/pail/
-Frontend/storage/logs/*.log
+# Laravel / Node system
+sistema/.env
+sistema/node_modules/
+sistema/vendor/
+sistema/public/build/
+sistema/public/hot
+sistema/public/storage/
+sistema/storage/*.key
+sistema/storage/pail/
+sistema/storage/logs/*.log
