@@ -6,10 +6,13 @@ Thumbs.db
 
 # Local tools / binaries
 ngrok.exe
+*.exe
 
 # Python model API
 modelo/__pycache__/
+modelo/**/__pycache__/
 modelo/*.py[cod]
+modelo/**/*.py[cod]
 modelo/.pytest_cache/
 modelo/.mypy_cache/
 modelo/.ruff_cache/
@@ -21,6 +24,10 @@ modelo/.env
 
 # Generated model artifacts
 modelo/rois_detectados.png
+modelo/ecg_procesado.png
+modelo/ecg_digitalizado.csv
+modelo/reporte_ecg_completo.png
+modelo/*.log
 
 # Laravel / Node system
 sistema/.env
@@ -32,3 +39,15 @@ sistema/public/storage/
 sistema/storage/*.key
 sistema/storage/pail/
 sistema/storage/logs/*.log
+sistema/storage/framework/cache/data/*
+sistema/storage/framework/sessions/*
+sistema/storage/framework/testing/*
+sistema/storage/framework/views/*
+!sistema/storage/framework/cache/data/.gitignore
+!sistema/storage/framework/sessions/.gitignore
+!sistema/storage/framework/testing/.gitignore
+!sistema/storage/framework/views/.gitignore
+sistema/bootstrap/cache/*.php
+!sistema/bootstrap/cache/.gitignore
+sistema/.phpunit.result.cache
+sistema/database/database.sqlite
