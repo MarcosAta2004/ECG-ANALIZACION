@@ -3,19 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisEcg;
+use App\Services\ServicioAuditoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\Session;
 use RuntimeException;
 
 class ControladorReportes extends Controlador
 {
     public function index()
     {
-        $userId = Session::get('user.id');
-
         $patients = AnalisisEcg::query()
-            ->where('user_id', $userId)
             ->whereNotNull('patient_identifier')
             ->select('patient_identifier')
             ->selectRaw('COUNT(*) as total')
@@ -26,7 +23,7 @@ class ControladorReportes extends Controlador
 
         $stats = [
             'patients' => $patients->count(),
-            'analyses' => AnalisisEcg::query()->where('user_id', $userId)->count(),
+            'analyses' => AnalisisEcg::query()->count(),
         ];
 
         return view('reportes', compact('patients', 'stats'));
@@ -45,10 +42,7 @@ class ControladorReportes extends Controlador
             return back()->with('error', 'Selecciona al menos un paciente para generar el reporte.');
         }
 
-        $userId = Session::get('user.id');
-
         $query = AnalisisEcg::query()
-            ->where('user_id', $userId)
             ->orderBy('patient_identifier')
             ->orderBy('created_at');
 
@@ -59,6 +53,22 @@ class ControladorReportes extends Controlador
         $rows = $query->get();
         $filename = 'reporte_pacientes_' . now()->format('Ymd_His') . '.xlsx';
         $path = $this->buildExcelReport($rows);
+
+        ServicioAuditoria::registrar(
+            'descargar',
+            'Reportes',
+            'ecg_analyses',
+            null,
+            'Descarga de reporte de pacientes.',
+            null,
+            [
+                'mode' => $validated['mode'],
+                'patients' => $selectedPatients,
+                'total_registros' => $rows->count(),
+                'filename' => $filename,
+            ],
+            $request
+        );
 
         return Response::download($path, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

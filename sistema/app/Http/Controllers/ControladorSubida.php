@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisEcg;
+use App\Services\ServicioAuditoria;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
@@ -68,7 +69,7 @@ class ControladorSubida extends Controlador
             $isNormal = str_contains(strtolower($data['label'] ?? ''), 'normal');
             $confidence = (float) ($data['confidence'] ?? 0);
 
-            AnalisisEcg::create([
+            $analisis = AnalisisEcg::create([
                 'user_id'         => $userId,
                 'filename'        => $generatedFilename,
                 'patient_identifier' => $patientIdentifier,
@@ -81,6 +82,23 @@ class ControladorSubida extends Controlador
                 'confidence'      => $confidence,
                 'top_predictions' => $data['top_predictions'] ?? [],
             ]);
+
+            ServicioAuditoria::registrar(
+                'crear',
+                'ECG',
+                'ecg_analyses',
+                $analisis->id,
+                'Carga y analisis de ECG.',
+                null,
+                [
+                    'filename' => $analisis->filename,
+                    'patient_identifier' => $analisis->patient_identifier,
+                    'label' => $analisis->label,
+                    'type' => $analisis->type,
+                    'confidence' => $analisis->confidence,
+                ],
+                $request
+            );
         }
 
         return response()->json($data);

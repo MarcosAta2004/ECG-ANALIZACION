@@ -3,15 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisEcg;
-use Illuminate\Support\Facades\Session;
 
 class ControladorResumen extends Controlador
 {
     public function index()
     {
-        $userId = Session::get('user.id');
         $summary = AnalisisEcg::query()
-            ->where('user_id', $userId)
             ->selectRaw('COUNT(*) as total')
             ->selectRaw("SUM(CASE WHEN type = 'normal' THEN 1 ELSE 0 END) as normales")
             ->first();
@@ -28,7 +25,7 @@ class ControladorResumen extends Controlador
             ['title' => 'Arritmias Detectadas', 'value' => number_format($arritmias), 'subtitle' => "{$pctArr}% del total", 'trend' => 'down', 'trend_value' => 'Requieren seguimiento', 'icon' => 'alert-triangle'],
         ];
 
-        $recentActivity = AnalisisEcg::where('user_id', $userId)
+        $recentActivity = AnalisisEcg::query()
             ->select(['id', 'type', 'filename', 'created_at'])
             ->orderByDesc('created_at')
             ->limit(5)

@@ -84,7 +84,7 @@ $sql[] = '';
 $sql[] = 'CREATE DATABASE IF NOT EXISTS bd_arritmias CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;';
 $sql[] = 'USE bd_arritmias;';
 $sql[] = '';
-$sql[] = 'DROP TABLE IF EXISTS reportes, diagnosticos, predicciones, imagenes, estudios, pacientes, codigo_pacientes, ritmo_cardiacos, clasificacion_arritmias, nivel_gravedades, grupo_cardiacos, usuarios, roles;';
+$sql[] = 'DROP TABLE IF EXISTS reportes, diagnosticos, predicciones, imagenes, estudios, pacientes, codigo_pacientes, ritmo_cardiacos, clasificacion_arritmias, nivel_gravedades, grupo_cardiacos, auditorias, usuarios, roles;';
 $sql[] = 'DROP TABLE IF EXISTS ecg_analyses, users, password_reset_tokens, sessions, cache, cache_locks, jobs, job_batches, failed_jobs, migrations;';
 $sql[] = '';
 $sql[] = 'SET FOREIGN_KEY_CHECKS = 1;';
@@ -110,6 +110,36 @@ CREATE TABLE usuarios (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_usuarios_roles FOREIGN KEY (role_id) REFERENCES roles(role_id) ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- Tabla de usuarios usada por Laravel y por el modulo de gestion.
+CREATE TABLE users (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    role_id INT NULL,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    email_verified_at TIMESTAMP NULL,
+    password VARCHAR(255) NOT NULL,
+    remember_token VARCHAR(100) NULL,
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    CONSTRAINT fk_users_roles FOREIGN KEY (role_id) REFERENCES roles(role_id) ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE auditorias (
+    auditoria_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    usuario_id BIGINT UNSIGNED NULL,
+    accion VARCHAR(100) NOT NULL,
+    modulo VARCHAR(100) NOT NULL,
+    entidad VARCHAR(100) NULL,
+    entidad_id VARCHAR(100) NULL,
+    descripcion TEXT NULL,
+    valores_anteriores JSON NULL,
+    valores_nuevos JSON NULL,
+    user_agent TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_auditorias_users FOREIGN KEY (usuario_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE grupo_cardiacos (
@@ -170,26 +200,26 @@ CREATE TABLE pacientes (
     edad INT,
     sexo CHAR(1),
     peso DECIMAL(6,2),
-    usuario_id INT NULL,
+    usuario_id BIGINT UNSIGNED NULL,
     estado BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_pacientes_codigo FOREIGN KEY (codigo_id) REFERENCES codigo_pacientes(codigo_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_pacientes_usuarios FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_pacientes_users FOREIGN KEY (usuario_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,
     CONSTRAINT chk_pacientes_sexo CHECK (sexo IN ('M', 'F'))
 ) ENGINE=InnoDB;
 
 CREATE TABLE estudios (
     estudio_id INT AUTO_INCREMENT PRIMARY KEY,
     paciente_id INT NOT NULL,
-    usuario_id INT NULL,
+    usuario_id BIGINT UNSIGNED NULL,
     legacy_analysis_id BIGINT UNSIGNED NULL,
     observaciones TEXT,
     estado BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_estudios_pacientes FOREIGN KEY (paciente_id) REFERENCES pacientes(paciente_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_estudios_usuarios FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON UPDATE CASCADE ON DELETE SET NULL
+    CONSTRAINT fk_estudios_users FOREIGN KEY (usuario_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE imagenes (
@@ -249,18 +279,6 @@ CREATE TABLE reportes (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_reportes_estudios FOREIGN KEY (estudio_id) REFERENCES estudios(estudio_id) ON UPDATE CASCADE ON DELETE CASCADE
-) ENGINE=InnoDB;
-
--- Tablas de compatibilidad con Laravel actual.
-CREATE TABLE users (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    email_verified_at TIMESTAMP NULL,
-    password VARCHAR(255) NOT NULL,
-    remember_token VARCHAR(100) NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE ecg_analyses (
@@ -353,7 +371,10 @@ CREATE TABLE migrations (
 SQL;
 
 $sql[] = '';
-$sql[] = "INSERT INTO roles (role_id, nombre, descripcion, estado, created_at, updated_at) VALUES (1, 'Administrador', 'Rol administrativo migrado desde SQLite', 1, NOW(), NOW());";
+$sql[] = "INSERT INTO roles (role_id, nombre, descripcion, estado, created_at, updated_at) VALUES
+(1, 'Administrador', 'Acceso completo al sistema', 1, NOW(), NOW()),
+(2, 'Medico', 'Gestion clinica de analisis ECG', 1, NOW(), NOW()),
+(3, 'Operador', 'Carga y consulta de analisis ECG', 1, NOW(), NOW());";
 
 if ($users) {
     $rows = [];
@@ -407,16 +428,18 @@ if ($users) {
     foreach ($users as $user) {
         $rows[] = values_line([
             sql_value($user['id']),
+            '1',
             sql_value($user['name']),
             sql_value($user['email']),
             sql_value($user['email_verified_at']),
             sql_value($user['password']),
             sql_value($user['remember_token']),
+            '1',
             sql_value($user['created_at']),
             sql_value($user['updated_at']),
         ]);
     }
-    $sql[] = 'INSERT INTO users (id, name, email, email_verified_at, password, remember_token, created_at, updated_at) VALUES';
+    $sql[] = 'INSERT INTO users (id, role_id, name, email, email_verified_at, password, remember_token, estado, created_at, updated_at) VALUES';
     $sql[] = implode(",\n", $rows) . ';';
 }
 
@@ -730,6 +753,10 @@ END$$
 DELIMITER ;
 
 CREATE INDEX idx_usuarios_role_id ON usuarios(role_id);
+CREATE INDEX idx_users_role_id ON users(role_id);
+CREATE INDEX idx_auditorias_usuario_id ON auditorias(usuario_id);
+CREATE INDEX idx_auditorias_modulo_accion ON auditorias(modulo, accion);
+CREATE INDEX idx_auditorias_created_at ON auditorias(created_at);
 CREATE INDEX idx_ritmo_grupo_id ON ritmo_cardiacos(grupo_id);
 CREATE INDEX idx_ritmo_nivel_id ON ritmo_cardiacos(nivel_id);
 CREATE INDEX idx_ritmo_clasificacion_id ON ritmo_cardiacos(clasificacion_id);

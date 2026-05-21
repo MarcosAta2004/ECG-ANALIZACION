@@ -9,6 +9,28 @@
 
 @theme {
     --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+
+    /* Registro de colores de la app para Tailwind CSS v4 */
+    --color-background: hsl(var(--background));
+    --color-foreground: hsl(var(--foreground));
+    --color-card: hsl(var(--card));
+    --color-primary: hsl(var(--primary));
+    --color-primary-foreground: hsl(var(--primary-foreground));
+    --color-secondary: hsl(var(--secondary));
+    --color-muted: hsl(var(--muted));
+    --color-muted-foreground: hsl(var(--muted-foreground));
+    --color-accent: hsl(var(--accent));
+    --color-destructive: hsl(var(--destructive));
+    --color-border: hsl(var(--border));
+    --color-input: hsl(var(--input));
+    --color-ring: hsl(var(--ring));
+    --color-success: hsl(var(--success));
+    --color-warning: hsl(var(--warning));
+
+    /* Registro de sombras */
+    --shadow-card: var(--shadow-card);
+    --shadow-elevated: var(--shadow-elevated);
+    --shadow-glow: var(--shadow-glow);
 }
 
 /* ── Variables de diseño médico ── */
@@ -33,6 +55,7 @@
     --sidebar-background: 210 32% 100%;
     --sidebar-foreground: 213 20% 15%;
     --sidebar-border: 210 25% 88%;
+    --clinical-footer-height: 2.75rem;
     --gradient-primary: linear-gradient(135deg, hsl(198 93% 48%) 0%, hsl(205 90% 58%) 100%);
     --shadow-glow: 0 0 30px hsl(198 93% 48% / 0.2);
     --shadow-card: 0 4px 24px hsl(213 20% 15% / 0.1);
@@ -148,6 +171,38 @@ h1,h2,h3,h4,h5,h6 { font-weight: 600; letter-spacing: -0.025em; }
 .input-field::placeholder { color: hsl(var(--muted-foreground)); }
 .input-field:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: hsl(var(--muted-foreground));
+}
+
+.filter-clear-btn {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+    color: hsl(var(--foreground));
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.filter-clear-btn:hover {
+    background: hsl(var(--secondary));
+    border-color: hsl(var(--primary) / 0.3);
+}
+
 .input-with-icon {
     position: relative;
     display: block;
@@ -183,8 +238,8 @@ h1,h2,h3,h4,h5,h6 { font-weight: 600; letter-spacing: -0.025em; }
 
 /* ── Sidebar ── */
 .sidebar {
-    position: fixed; left: 0; top: 0; z-index: 40;
-    height: 100vh; width: 16rem;
+    position: fixed; left: 0; top: 0; bottom: var(--clinical-footer-height); z-index: 40;
+    width: 16rem;
     background: hsl(var(--sidebar-background));
     border-right: 1px solid hsl(var(--sidebar-border));
     transition: transform 0.3s ease-in-out;
@@ -205,6 +260,34 @@ h1,h2,h3,h4,h5,h6 { font-weight: 600; letter-spacing: -0.025em; }
     color: hsl(var(--primary));
     border: 1px solid hsl(var(--primary) / 0.2);
     box-shadow: var(--shadow-glow);
+}
+
+.logout-button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    color: hsl(var(--destructive));
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.logout-button:hover {
+    background: hsl(var(--destructive) / 0.10);
+    border-color: hsl(var(--destructive) / 0.28);
+    box-shadow: 0 8px 22px hsl(var(--destructive) / 0.12);
+    transform: translateY(-1px);
+}
+.logout-button:focus-visible {
+    outline: none;
+    border-color: hsl(var(--destructive) / 0.45);
+    box-shadow: 0 0 0 3px hsl(var(--destructive) / 0.18);
+}
+.logout-button:active {
+    transform: translateY(0);
+    background: hsl(var(--destructive) / 0.16);
 }
 
 /* ── Tarjeta ── */

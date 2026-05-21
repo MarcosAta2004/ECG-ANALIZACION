@@ -6,7 +6,6 @@ use App\Models\AnalisisEcg;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Session;
 
 class ControladorMetricas extends Controlador
 {
@@ -17,11 +16,10 @@ class ControladorMetricas extends Controlador
             'to' => ['nullable', 'date', 'after_or_equal:from'],
         ]);
 
-        $userId = Session::get('user.id');
         $from = !empty($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : null;
         $to = !empty($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : null;
 
-        $baseQuery = AnalisisEcg::query()->where('user_id', $userId);
+        $baseQuery = AnalisisEcg::query();
         $filteredQuery = $this->applyDateRange(clone $baseQuery, $from, $to);
 
         $total = (clone $filteredQuery)->count();
@@ -199,11 +197,10 @@ class ControladorMetricas extends Controlador
             'to' => ['nullable', 'date', 'after_or_equal:from'],
         ]);
 
-        $userId = Session::get('user.id');
         $from = !empty($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : null;
         $to = !empty($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : null;
 
-        $baseQuery = AnalisisEcg::query()->where('user_id', $userId);
+        $baseQuery = AnalisisEcg::query();
         $filteredQuery = $this->applyDateRange(clone $baseQuery, $from, $to);
 
         $total = (clone $filteredQuery)->count();

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisEcg;
+use App\Services\ServicioAuditoria;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 
 class ControladorHistorial extends Controlador
 {
@@ -16,12 +16,10 @@ class ControladorHistorial extends Controlador
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $userId = Session::get('user.id');
         $search = trim((string) ($validated['search'] ?? ''));
         $filter = $validated['filter'] ?? 'all';
 
-        $query = AnalisisEcg::query()
-            ->where('user_id', $userId);
+        $query = AnalisisEcg::query();
 
         if ($search !== '') {
             $query->where(function ($innerQuery) use ($search) {
@@ -61,7 +59,7 @@ class ControladorHistorial extends Controlador
             'reviewed_at'   => $r->reviewed_at?->format('Y-m-d H:i'),
         ]);
 
-        $statsBaseQuery = AnalisisEcg::query()->where('user_id', $userId);
+        $statsBaseQuery = AnalisisEcg::query();
         $stats = [
             'total' => (clone $statsBaseQuery)->count(),
             'normales' => (clone $statsBaseQuery)->where('type', 'normal')->count(),
@@ -88,10 +86,8 @@ class ControladorHistorial extends Controlador
             'doctor_notes'  => 'nullable|string|max:1000',
         ]);
 
-        $userId   = Session::get('user.id');
-        $analysis = AnalisisEcg::where('id', $id)
-            ->where('user_id', $userId)
-            ->firstOrFail();
+        $analysis = AnalisisEcg::where('id', $id)->firstOrFail();
+        $anteriores = $analysis->only(['doctor_result', 'doctor_label', 'doctor_notes', 'reviewed_at']);
 
         $analysis->update([
             'doctor_result' => $request->input('doctor_result'),
@@ -99,6 +95,17 @@ class ControladorHistorial extends Controlador
             'doctor_notes'  => $request->input('doctor_notes'),
             'reviewed_at'   => now(),
         ]);
+
+        ServicioAuditoria::registrar(
+            'actualizar',
+            'Historial',
+            'ecg_analyses',
+            $analysis->id,
+            'Registro o actualizacion de valoracion medica.',
+            $anteriores,
+            $analysis->only(['doctor_result', 'doctor_label', 'doctor_notes', 'reviewed_at']),
+            $request
+        );
 
         return response()->json([
             'ok'          => true,
@@ -111,10 +118,8 @@ class ControladorHistorial extends Controlador
      */
     public function removeReview($id)
     {
-        $userId   = Session::get('user.id');
-        $analysis = AnalisisEcg::where('id', $id)
-            ->where('user_id', $userId)
-            ->firstOrFail();
+        $analysis = AnalisisEcg::where('id', $id)->firstOrFail();
+        $anteriores = $analysis->only(['doctor_result', 'doctor_label', 'doctor_notes', 'reviewed_at']);
 
         $analysis->update([
             'doctor_result' => null,
@@ -122,6 +127,17 @@ class ControladorHistorial extends Controlador
             'doctor_notes'  => null,
             'reviewed_at'   => null,
         ]);
+
+        ServicioAuditoria::registrar(
+            'eliminar',
+            'Historial',
+            'ecg_analyses',
+            $analysis->id,
+            'Eliminacion de valoracion medica.',
+            $anteriores,
+            $analysis->only(['doctor_result', 'doctor_label', 'doctor_notes', 'reviewed_at']),
+            request()
+        );
 
         return response()->json(['ok' => true]);
     }

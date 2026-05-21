@@ -9,7 +9,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 CREATE DATABASE IF NOT EXISTS bd_arritmias CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE bd_arritmias;
 
-DROP TABLE IF EXISTS reportes, diagnosticos, predicciones, imagenes, estudios, pacientes, codigo_pacientes, ritmo_cardiacos, clasificacion_arritmias, nivel_gravedades, grupo_cardiacos, usuarios, roles;
+DROP TABLE IF EXISTS reportes, diagnosticos, predicciones, imagenes, estudios, pacientes, codigo_pacientes, ritmo_cardiacos, clasificacion_arritmias, nivel_gravedades, grupo_cardiacos, auditorias, usuarios, roles;
 DROP TABLE IF EXISTS ecg_analyses, users, password_reset_tokens, sessions, cache, cache_locks, jobs, job_batches, failed_jobs, migrations;
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -33,6 +33,36 @@ CREATE TABLE usuarios (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_usuarios_roles FOREIGN KEY (role_id) REFERENCES roles(role_id) ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- Tabla de usuarios usada por Laravel y por el modulo de gestion.
+CREATE TABLE users (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    role_id INT NULL,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    email_verified_at TIMESTAMP NULL,
+    password VARCHAR(255) NOT NULL,
+    remember_token VARCHAR(100) NULL,
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    CONSTRAINT fk_users_roles FOREIGN KEY (role_id) REFERENCES roles(role_id) ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE auditorias (
+    auditoria_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    usuario_id BIGINT UNSIGNED NULL,
+    accion VARCHAR(100) NOT NULL,
+    modulo VARCHAR(100) NOT NULL,
+    entidad VARCHAR(100) NULL,
+    entidad_id VARCHAR(100) NULL,
+    descripcion TEXT NULL,
+    valores_anteriores JSON NULL,
+    valores_nuevos JSON NULL,
+    user_agent TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_auditorias_users FOREIGN KEY (usuario_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE grupo_cardiacos (
@@ -93,26 +123,26 @@ CREATE TABLE pacientes (
     edad INT,
     sexo CHAR(1),
     peso DECIMAL(6,2),
-    usuario_id INT NULL,
+    usuario_id BIGINT UNSIGNED NULL,
     estado BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_pacientes_codigo FOREIGN KEY (codigo_id) REFERENCES codigo_pacientes(codigo_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_pacientes_usuarios FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_pacientes_users FOREIGN KEY (usuario_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,
     CONSTRAINT chk_pacientes_sexo CHECK (sexo IN ('M', 'F'))
 ) ENGINE=InnoDB;
 
 CREATE TABLE estudios (
     estudio_id INT AUTO_INCREMENT PRIMARY KEY,
     paciente_id INT NOT NULL,
-    usuario_id INT NULL,
+    usuario_id BIGINT UNSIGNED NULL,
     legacy_analysis_id BIGINT UNSIGNED NULL,
     observaciones TEXT,
     estado BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_estudios_pacientes FOREIGN KEY (paciente_id) REFERENCES pacientes(paciente_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_estudios_usuarios FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON UPDATE CASCADE ON DELETE SET NULL
+    CONSTRAINT fk_estudios_users FOREIGN KEY (usuario_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE imagenes (
@@ -172,18 +202,6 @@ CREATE TABLE reportes (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_reportes_estudios FOREIGN KEY (estudio_id) REFERENCES estudios(estudio_id) ON UPDATE CASCADE ON DELETE CASCADE
-) ENGINE=InnoDB;
-
--- Tablas de compatibilidad con Laravel actual.
-CREATE TABLE users (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    email_verified_at TIMESTAMP NULL,
-    password VARCHAR(255) NOT NULL,
-    remember_token VARCHAR(100) NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE ecg_analyses (
@@ -274,6 +292,45 @@ CREATE TABLE migrations (
     batch INT NOT NULL
 ) ENGINE=InnoDB;
 
+INSERT INTO roles (role_id, nombre, descripcion, estado, created_at, updated_at) VALUES
+(1, 'Administrador', 'Acceso completo al sistema', 1, NOW(), NOW()),
+(2, 'Medico', 'Gestion clinica de analisis ECG', 1, NOW(), NOW()),
+(3, 'Operador', 'Carga y consulta de analisis ECG', 1, NOW(), NOW());
+
+INSERT INTO grupo_cardiacos (grupo_id, nombre, descripcion) VALUES
+(1, 'Sinusal', 'Ritmos de origen sinusal'),
+(2, 'Conduccion', 'Alteraciones de conduccion cardiaca'),
+(3, 'Ectopias', 'Complejos prematuros o patrones ectopicos'),
+(4, 'Supraventricular', 'Arritmias de origen supraventricular');
+
+INSERT INTO nivel_gravedades (nivel_id, nombre) VALUES
+(1, 'Baja'),
+(2, 'Moderada'),
+(3, 'Alta');
+
+INSERT INTO clasificacion_arritmias (clasificacion_id, nombre) VALUES
+(1, 'Normal'),
+(2, 'Arritmia');
+
+INSERT INTO ritmo_cardiacos (ritmo_id, grupo_id, nivel_id, clasificacion_id, label, nombre, descripcion, estado, created_at, updated_at) VALUES
+(1, 1, 1, 1, 'NORM', 'Ritmo Sinusal Normal', 'ECG dentro de limites normales.', 1, NOW(), NOW()),
+(2, 2, 2, 2, '1AVB', 'Bloqueo AV de primer grado', 'Retraso de conduccion auriculoventricular.', 1, NOW(), NOW()),
+(3, 2, 2, 2, 'WPW', 'Sindrome de Wolff-Parkinson-White', 'Patron de preexcitacion ventricular.', 1, NOW(), NOW()),
+(4, 3, 2, 2, 'PVC', 'Complejo ventricular prematuro', 'Latido ventricular ectopico prematuro.', 1, NOW(), NOW()),
+(5, 3, 2, 2, 'PAC', 'Complejo auricular prematuro', 'Latido auricular ectopico prematuro.', 1, NOW(), NOW()),
+(6, 4, 3, 2, 'AFIB', 'Fibrilacion Auricular', 'Ritmo auricular irregular compatible con fibrilacion.', 1, NOW(), NOW()),
+(7, 1, 2, 2, 'STACH', 'Taquicardia Sinusal', 'Frecuencia sinusal elevada.', 1, NOW(), NOW()),
+(8, 1, 1, 1, 'SARRH', 'Arritmia Sinusal', 'Variabilidad fisiologica del ritmo sinusal.', 1, NOW(), NOW()),
+(9, 1, 1, 1, 'SBRAD', 'Bradicardia Sinusal', 'Frecuencia sinusal disminuida.', 1, NOW(), NOW()),
+(10, 4, 2, 2, 'SVARR', 'Arritmia Supraventricular', 'Alteracion del ritmo de origen supraventricular.', 1, NOW(), NOW()),
+(11, 3, 2, 2, 'BIGU', 'Bigeminismo', 'Patron bigeminal de origen supraventricular o ventricular.', 1, NOW(), NOW()),
+(12, 4, 3, 2, 'AFLT', 'Flutter Auricular', 'Ritmo auricular compatible con flutter.', 1, NOW(), NOW()),
+(13, 4, 2, 2, 'PSVT', 'Taquicardia supraventricular paroxistica', 'Taquicardia supraventricular de inicio paroxistico.', 1, NOW(), NOW());
+
+INSERT INTO codigo_pacientes (codigo_id, nombre, descripcion, estado, created_at, updated_at) VALUES
+(1, 'PACIENTE', 'Codigo generado por el sistema', 1, NOW(), NOW());
+
+DELIMITER $$
 
 CREATE TRIGGER trg_ecg_analyses_ai
 AFTER INSERT ON ecg_analyses
@@ -438,6 +495,10 @@ END$$
 DELIMITER ;
 
 CREATE INDEX idx_usuarios_role_id ON usuarios(role_id);
+CREATE INDEX idx_users_role_id ON users(role_id);
+CREATE INDEX idx_auditorias_usuario_id ON auditorias(usuario_id);
+CREATE INDEX idx_auditorias_modulo_accion ON auditorias(modulo, accion);
+CREATE INDEX idx_auditorias_created_at ON auditorias(created_at);
 CREATE INDEX idx_ritmo_grupo_id ON ritmo_cardiacos(grupo_id);
 CREATE INDEX idx_ritmo_nivel_id ON ritmo_cardiacos(nivel_id);
 CREATE INDEX idx_ritmo_clasificacion_id ON ritmo_cardiacos(clasificacion_id);

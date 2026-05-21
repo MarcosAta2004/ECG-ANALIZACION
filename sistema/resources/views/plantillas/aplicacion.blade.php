@@ -27,6 +27,12 @@
         </header>
 
         <div class="px-4 lg:px-8 py-6 lg:py-8">
+            @if (session('error'))
+                <div class="alert-error mb-6">
+                    <span>{{ session('error') }}</span>
+                </div>
+            @endif
+
             @yield('content')
         </div>
     </main>

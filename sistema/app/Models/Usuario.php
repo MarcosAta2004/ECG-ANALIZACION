@@ -24,6 +24,8 @@ class Usuario extends Authenticatable
         'name',
         'email',
         'password',
+        'role_id',
+        'estado',
     ];
 
     /**
@@ -46,11 +48,22 @@ class Usuario extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'estado' => 'boolean',
         ];
+    }
+
+    public function rol()
+    {
+        return $this->belongsTo(Rol::class, 'role_id');
     }
 
     public function analisisEcg()
     {
         return $this->hasMany(AnalisisEcg::class, 'user_id');
+    }
+
+    public function esAdministrador(): bool
+    {
+        return strcasecmp((string) $this->rol?->nombre, 'Administrador') === 0;
     }
 }

@@ -1,4 +1,7 @@
-@php $user = session('user'); @endphp
+@php
+    $user = session('user');
+    $isAdmin = ($user['role'] ?? '') === 'Administrador';
+@endphp
 
 <div x-data="{ open: false }">
 
@@ -68,6 +71,11 @@
                     ['title' => 'Historial','route' => 'history',   'icon' => 'file-text'],
                     ['title' => 'Reportes',            'route' => 'reports',   'icon' => 'report'],
                 ];
+
+                if ($isAdmin) {
+                    $navItems[] = ['title' => 'Usuarios', 'route' => 'usuarios.index', 'icon' => 'users'];
+                    $navItems[] = ['title' => 'Auditoria', 'route' => 'auditoria.index', 'icon' => 'audit'];
+                }
             @endphp
 
             @foreach($navItems as $item)
@@ -105,6 +113,18 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M14 3v5h5" />
                         </svg>
+                    @elseif($item['icon'] === 'users')
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0"
+                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m0-4a4 4 0 100-8 4 4 0 000 8zm8 0a4 4 0 100-8 4 4 0 000 8z" />
+                        </svg>
+                    @elseif($item['icon'] === 'audit')
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0"
+                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12l2 2 4-4m5-4.5V12c0 4.5-3.1 8.4-8 9.5-4.9-1.1-8-5-8-9.5V5.5L12 3l8 2.5z" />
+                        </svg>
                     @else
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0"
                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -123,8 +143,7 @@
         <div class="p-4 border-t border-sidebar-border">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit"
-                        class="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-200">
+                <button type="submit" class="logout-button">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

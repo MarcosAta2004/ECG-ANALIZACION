@@ -1101,7 +1101,7 @@ def _cargar_modelo():
     if not _os.path.exists(MODELO_PATH):
         raise FileNotFoundError(
             f"No existe el modelo '{MODELO_PATH}'. "
-            "Copia modelo_arritmias_Fina_v4.keras dentro de la carpeta modelo."
+            "Copia modelo_arritmias_5seg.keras dentro de la carpeta modelo."
         )
 
     model = construir_modelo()

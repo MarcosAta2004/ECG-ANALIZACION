@@ -2,6 +2,10 @@
 
 @section('title', 'Historial')
 
+@php
+    $canReview = in_array(session('user.role'), ['Administrador', 'Medico'], true);
+@endphp
+
 @section('page-header')
     <h1 class="text-2xl lg:text-3xl font-bold animate-fade-in">
         <span class="gradient-text">Historial de Analisis</span>
@@ -17,6 +21,7 @@
     x-data="historyPage({
         history: {{ Js::from($history->items()) }},
         csrf: '{{ csrf_token() }}',
+        canReview: {{ Js::from($canReview) }},
     })"
 >
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up">
@@ -122,19 +127,23 @@
                                 </template>
                             </td>
                             <td>
-                                <div class="flex items-center justify-end gap-2">
-                                    <button
-                                        type="button"
-                                        @click="openReview(item)"
-                                        class="p-2 rounded-lg transition-colors"
-                                        :class="item.doctor_result ? 'hover:bg-primary/10 text-primary' : 'hover:bg-secondary text-muted-foreground'"
-                                        :title="item.doctor_result ? 'Editar valoracion' : 'Anadir valoracion medica'"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                        </svg>
-                                    </button>
-                                </div>
+                                @if($canReview)
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            @click="openReview(item)"
+                                            class="p-2 rounded-lg transition-all duration-200 active:scale-90"
+                                            :class="item.doctor_result ? 'hover:bg-primary/10 text-primary hover:text-primary' : 'hover:bg-primary/10 text-muted-foreground hover:text-primary'"
+                                            :title="item.doctor_result ? 'Editar valoracion' : 'Anadir valoracion medica'"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                @else
+                                    <span class="text-xs text-muted-foreground italic">Solo lectura</span>
+                                @endif
                             </td>
                         </tr>
                     </template>
@@ -163,18 +172,20 @@
                             <p class="text-xs text-muted-foreground italic">Sin valoracion medica</p>
                         </template>
                     </div>
-                    <div class="mt-3 flex justify-end">
-                        <button
-                            type="button"
-                            @click="openReview(item)"
-                            class="p-2 rounded-lg hover:bg-secondary transition-colors"
-                            :class="item.doctor_result ? 'text-primary' : 'text-muted-foreground'"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                            </svg>
-                        </button>
-                    </div>
+                    @if($canReview)
+                        <div class="mt-3 flex justify-end">
+                            <button
+                                type="button"
+                                @click="openReview(item)"
+                                class="p-2 rounded-lg transition-all duration-200 active:scale-90"
+                                :class="item.doctor_result ? 'hover:bg-primary/10 text-primary hover:text-primary' : 'hover:bg-primary/10 text-muted-foreground hover:text-primary'"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                            </button>
+                        </div>
+                    @endif
                 </div>
             </template>
         </div>
@@ -192,13 +203,14 @@
         </div>
     @endif
 
-    <div
-        x-show="reviewModal.open"
-        x-transition.opacity
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style="display:none; background:rgba(0,0,0,0.4); backdrop-filter:blur(4px);"
-        @click.self="reviewModal.open = false"
-    >
+    @if($canReview)
+        <div
+            x-show="reviewModal.open"
+            x-transition.opacity
+            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style="display:none; background:rgba(0,0,0,0.4); backdrop-filter:blur(4px);"
+            @click.self="reviewModal.open = false"
+        >
         <div
             x-show="reviewModal.open"
             x-transition
@@ -210,7 +222,7 @@
                     <h3 class="font-semibold">Valoracion Medica</h3>
                     <p class="text-xs text-muted-foreground">Resultado del especialista</p>
                 </div>
-                <button type="button" @click="reviewModal.open = false" class="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground">
+                <button type="button" @click="reviewModal.open = false" class="p-1.5 rounded-lg hover:bg-secondary hover:text-foreground transition-all duration-200 active:scale-90 text-muted-foreground">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -220,15 +232,21 @@
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Diagnostico medico <span class="text-destructive">*</span></label>
                 <div class="grid grid-cols-2 gap-3">
-                    <label class="relative cursor-pointer">
+                    <label class="relative cursor-pointer group">
                         <input type="radio" x-model="reviewModal.result" value="normal" class="sr-only peer">
-                        <div class="p-3 rounded-xl border-2 text-center transition-all peer-checked:border-success peer-checked:bg-success/10 peer-checked:text-success border-border hover:border-success/50">
+                        <div class="p-4 rounded-xl border-2 text-center transition-all duration-300 peer-checked:border-success peer-checked:bg-success/10 peer-checked:text-success peer-checked:shadow-[0_0_12px_hsl(var(--success)/0.25)] border-border hover:border-success/50 hover:bg-success/5 active:scale-98">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto mb-2 transition-transform duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h3l3-9 3 18 3-12 1.5 4.5 1.5-4.5H21" />
+                            </svg>
                             <p class="text-sm font-semibold">Normal</p>
                         </div>
                     </label>
-                    <label class="relative cursor-pointer">
+                    <label class="relative cursor-pointer group">
                         <input type="radio" x-model="reviewModal.result" value="arritmia" class="sr-only peer">
-                        <div class="p-3 rounded-xl border-2 text-center transition-all peer-checked:border-warning peer-checked:bg-warning/10 peer-checked:text-warning border-border hover:border-warning/50">
+                        <div class="p-4 rounded-xl border-2 text-center transition-all duration-300 peer-checked:border-warning peer-checked:bg-warning/10 peer-checked:text-warning peer-checked:shadow-[0_0_12px_hsl(var(--warning)/0.25)] border-border hover:border-warning/50 hover:bg-warning/5 active:scale-98">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto mb-2 transition-transform duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h2l2-6 2 10 1.5-7 1.5 12 2-15 2 10 1-5 1.5 5 1.5-6H21" />
+                            </svg>
                             <p class="text-sm font-semibold">Arritmia</p>
                         </div>
                     </label>
@@ -248,18 +266,18 @@
             <p x-show="reviewModal.error" x-text="reviewModal.error" class="text-sm text-destructive mb-4 px-3 py-2 rounded-lg" style="background:hsl(var(--destructive)/0.08);"></p>
 
             <div class="flex gap-3">
-                <button type="button" @click="submitReview()" :disabled="reviewModal.saving" class="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-60" style="background:hsl(var(--primary));">
+                <button type="button" @click="submitReview()" :disabled="reviewModal.saving" class="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-glow transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none">
                     <span x-show="!reviewModal.saving">Guardar Valoracion</span>
                     <span x-show="reviewModal.saving">Guardando...</span>
                 </button>
                 <template x-if="findHistoryItem(reviewModal.id)?.doctor_result">
-                    <button type="button" @click="removeReview()" :disabled="reviewModal.saving" class="px-4 py-2.5 rounded-xl font-medium text-sm text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-60" style="border:1px solid hsl(var(--destructive)/0.3);">
+                    <button type="button" @click="removeReview()" :disabled="reviewModal.saving" class="px-4 py-2.5 rounded-xl font-medium text-sm text-destructive border border-destructive/30 hover:border-destructive/50 hover:bg-destructive/10 transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none">
                         Quitar
                     </button>
                 </template>
             </div>
         </div>
-    </div>
+    @endif
 </div>
 
 <script>
@@ -267,6 +285,7 @@ function historyPage(config) {
     return {
         history: config.history ?? [],
         csrf: config.csrf,
+        canReview: Boolean(config.canReview),
         reviewModal: {
             open: false,
             id: null,
@@ -282,6 +301,10 @@ function historyPage(config) {
         },
 
         openReview(item) {
+            if (!this.canReview) {
+                return;
+            }
+
             this.reviewModal = {
                 open: true,
                 id: item.id,
