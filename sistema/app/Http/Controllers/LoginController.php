@@ -12,19 +12,28 @@ class LoginController extends Controller
 {
     public function iniciarSesion(Request $request)
     {
+        // Soporte flexible para 'usuario' o 'name' para pruebas rápidas
+        $loginField = $request->has('usuario') ? 'usuario' : ($request->has('name') ? 'name' : 'usuario');
+
         $request->validate([
-            'usuario' => 'required',
+            $loginField => 'required',
             'password' => 'required'
         ]);
 
-        $credentials = $request->only('usuario', 'password');
+        $credentials = [
+            'usuario' => $request->input($loginField),
+            'password' => $request->input('password')
+        ];
 
-        $user = User::where('usuario', $credentials['usuario'])->first();
+        $user = User::where('usuario', $credentials['usuario'])
+                    ->orWhere('name', $credentials['usuario'])
+                    ->first();
 
         if ($user && $user->estado != 1) {
-            return back()->withErrors([
-                'usuario' => 'Su cuenta está desactivada. Contacte al administrador.'
-            ]);
+            return response()->json([
+                'error' => 'Cuenta desactivada',
+                'message' => 'Su cuenta está desactivada. Contacte al administrador.'
+            ], 403);
         }
 
         if (Auth::attempt($credentials)) {
@@ -38,12 +47,23 @@ class LoginController extends Controller
             ]);
             ServicioAuditoria::registrar('login', 'Autenticacion', 'users', Auth::id(), 'Inicio de sesion exitoso.', null, ['email' => $user->email ?? $user->usuario], $request);
             $request->session()->regenerate();
-            return redirect()->intended('/dashboard');
+            
+            return response()->json([
+                'message' => 'Login exitoso',
+                'user' => [
+                    'id' => $user->id,
+                    'usuario' => $user->usuario,
+                    'name' => $user->name,
+                    'role' => $authenticatedUser?->rolesa?->name ?? '',
+                ],
+                'redirect_hint' => '/dashboard'
+            ]);
         }
 
-        return back()->withErrors([
-            'usuario' => 'Credenciales incorrectas.'
-        ]);
+        return response()->json([
+            'error' => 'Credenciales incorrectas',
+            'message' => 'El usuario o contraseña no coinciden.'
+        ], 401);
     }
 
     public function logout(Request $request)

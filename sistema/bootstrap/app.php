@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: [
+            '*',
+        ]);
+        $middleware->redirectGuestsTo(fn () => response()->json(['message' => 'Unauthorized. Please login.', 'status' => 401], 401));
         $middleware->alias([
             'rol' => MiddlewareRol::class,
         ]);
