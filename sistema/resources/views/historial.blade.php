@@ -43,7 +43,7 @@
         </div>
     </div>
 
-    <form method="GET" action="{{ route('history') }}" class="card animate-fade-in-up" style="animation-delay:100ms;">
+    <form method="GET" action="{{ route('estudios.index') }}" class="card animate-fade-in-up" style="animation-delay:100ms;">
         <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px_auto] gap-4 items-end">
             <label class="filter-field">
                 <span class="filter-label">Buscar</span>
@@ -67,7 +67,7 @@
             </label>
             <div class="flex gap-3">
                 <button type="submit" class="btn-primary flex-1">Aplicar</button>
-                <a href="{{ route('history') }}" class="filter-clear-btn flex-1">Limpiar</a>
+                <a href="{{ route('estudios.index') }}" class="filter-clear-btn flex-1">Limpiar</a>
             </div>
         </div>
     </form>
@@ -326,7 +326,7 @@ function historyPage(config) {
             this.reviewModal.error = '';
 
             try {
-                const resp = await fetch(`/history/${this.reviewModal.id}/review`, {
+                const resp = await fetch(`/clinico/diagnosticos/${this.reviewModal.id}/review`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -366,7 +366,7 @@ function historyPage(config) {
             this.reviewModal.error = '';
 
             try {
-                const resp = await fetch(`/history/${this.reviewModal.id}/review`, {
+                const resp = await fetch(`/clinico/diagnosticos/${this.reviewModal.id}/review`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': this.csrf,

@@ -7,37 +7,78 @@
     <title>ECG Analyzer - @yield('title', 'Panel')</title>
     @vite(['resources/css/aplicacion.css', 'resources/js/aplicacion.js'])
 </head>
-<body class="bg-background min-h-screen pb-16" x-data="{ showClinicalDisclaimer: false }">
+<body class="bg-background min-h-screen" x-data="{ showClinicalDisclaimer: false }">
 
     @include('parciales.barra-lateral')
 
-    <main class="lg:ml-64 min-h-screen">
-        <header class="sticky top-0 z-30 border-b border-border"
-                style="background:hsl(var(--background)/0.8);backdrop-filter:blur(12px);">
-            <div class="px-4 lg:px-8 py-4 lg:py-6">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div class="pt-12 lg:pt-0">
-                        @yield('page-header')
-                    </div>
-                    <div class="flex items-center gap-2">
-                        @yield('header-actions')
-                    </div>
-                </div>
-            </div>
-        </header>
+    {{-- Lado Derecho: Navbar + Contenido + Footer --}}
+    <div class="flex flex-col bg-muted/30">
+        
+        {{-- Navbar --}}
+        @include('parciales.navbar')
 
-        <div class="px-4 lg:px-8 py-6 lg:py-8">
+        {{-- Espacio para el CRUD --}}
+        <main class="flex-1 px-4 lg:px-8 py-8">
+            <div class="mb-8">
+                @yield('page-header')
+            </div>
+
             @if (session('error'))
                 <div class="alert-error mb-6">
                     <span>{{ session('error') }}</span>
                 </div>
             @endif
 
-            @yield('content')
-        </div>
-    </main>
+            @if ($errors->any())
+                <div class="alert-error mb-6 animate-fade-in-up">
+                    <ul class="list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-    @include('parciales.pie-clinico', ['withSidebar' => true])
+            @yield('content')
+        </main>
+
+        {{-- Footer integrado en el cuerpo --}}
+        <footer class="py-6 px-8 border-t border-border/40">
+            <div class="text-center">
+                <p class="text-[11px] text-muted-foreground font-medium tracking-wide">
+                    Copyright {{ date('Y') }} © ArrhythmiaAI - Sistema de Análisis ECG 
+                    <span class="mx-2 text-border">|</span>
+                    <button @click="showClinicalDisclaimer = true" class="hover:text-primary transition-colors">Aviso Legal</button>
+                </p>
+            </div>
+        </footer>
+
+    </div>
+
+    {{-- Modales globales --}}
+    @include('parciales.modal-clinico')
+
+    {{-- 
+        GUIA PARA EL DESARROLLADOR (CRUD)
+        -------------------------------
+        Para crear nuevos CRUDs que se vean igual al resto del sistema:
+        
+        1. Estructura de la Vista:
+           @extends('plantillas.aplicacion')
+           @section('content')
+              <div class="space-y-6"> ... </div>
+           @endsection
+
+        2. componentes utiles:
+           - Tarjetas: <div class="card"> ... </div>
+           - Botones: <button class="btn-primary">Texto</button>
+           - Inputs: <input class="input-field">
+           - Tablas: <table class="table-ecg"> ... </table>
+           - Badges: <span class="badge badge-success">Activo</span>
+
+        3. Animaciones:
+           Usa la clase 'animate-fade-in-up' en tus contenedores principales.
+    --}}
 
 </body>
 </html>

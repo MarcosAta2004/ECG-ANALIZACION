@@ -135,7 +135,7 @@
                     Acciones Rapidas
                 </h2>
                 <div class="space-y-3">
-                    <a href="{{ route('upload') }}"
+                    <a href="{{ route('imagenes.index') }}"
                        class="block p-4 rounded-lg transition-all group"
                        style="background:hsl(var(--primary)/0.1);border:1px solid hsl(var(--primary)/0.2);"
                        onmouseover="this.style.background='hsl(var(--primary)/0.2)'"
@@ -156,7 +156,7 @@
                         </div>
                     </a>
 
-                    <a href="{{ route('history') }}"
+                    <a href="{{ route('estudios.index') }}"
                        class="block p-4 rounded-lg transition-all group bg-secondary hover:bg-secondary/80">
                         <div class="flex items-center gap-3">
                             <div class="p-2 rounded-lg bg-muted text-muted-foreground">

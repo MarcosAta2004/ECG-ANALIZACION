@@ -242,7 +242,7 @@
 
 <script>
 const API_BASE_URL = '{{ env("ECG_API_URL", "http://localhost:8001") }}';
-const ANALYZE_URL = '{{ route("analyze") }}';
+const ANALYZE_URL = '{{ route("imagenes.analyze") }}';
 const CSRF_TOKEN = '{{ csrf_token() }}';
 const LEADS_ORDER = ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'];
 const NORMAL_RECS = [

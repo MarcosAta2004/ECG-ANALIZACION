@@ -55,10 +55,10 @@
                   x-data="loginForm()" @submit.prevent="handleSubmit">
                 @csrf
 
-                {{-- Email --}}
+                {{-- Usuario --}}
                 <div class="mb-5 animate-fade-in-delay-2">
-                    <label for="email" class="block text-sm font-medium text-foreground mb-2">
-                        Correo electrónico
+                    <label for="usuario" class="block text-sm font-medium text-foreground mb-2">
+                        Usuario o Correo
                     </label>
                     <div class="input-with-icon">
                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -67,17 +67,16 @@
                              aria-hidden="true"
                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7
-                                     a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
-                        <input id="email" name="email" type="email"
-                               value="{{ old('email') }}"
-                               placeholder="doctor@hospital.com"
+                        <input id="usuario" name="usuario" type="text"
+                               value="{{ old('usuario') }}"
+                               placeholder="Ej: admin o doctor@hospital.com"
                                class="input-field"
                                :disabled="loading"
-                               autocomplete="email" />
+                               autocomplete="username" />
                     </div>
-                    @error('email')
+                    @error('usuario')
                         <p class="mt-1 text-xs text-destructive">{{ $message }}</p>
                     @enderror
                 </div>

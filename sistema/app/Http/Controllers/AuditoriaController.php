@@ -88,6 +88,6 @@ class AuditoriaController extends Controller
             'hasta'   => $validated['hasta']   ?? '',
         ];
 
-        return view('usuarios.auditoria', compact('auditorias', 'usuarios', 'modulos', 'acciones', 'stats', 'filters'));
+        return view('auditoria', compact('auditorias', 'usuarios', 'modulos', 'acciones', 'stats', 'filters'));
     }
 }

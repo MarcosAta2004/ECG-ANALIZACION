@@ -3,227 +3,129 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Area;
-use App\Models\CentroCosto;
-use App\Models\Unidad;
 use App\Models\User;
+use App\Traits\Auditable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-
     public function index(Request $request)
     {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'role'   => ['nullable', 'integer'],
+            'status' => ['nullable', 'string', 'in:all,active,inactive'],
+            'tab'    => ['nullable', 'string', 'in:usuarios,roles'],
+        ]);
 
+        $filters = [
+            'search' => $validated['search'] ?? '',
+            'role'   => $validated['role']   ?? '',
+            'status' => $validated['status'] ?? 'all',
+            'tab'    => $validated['tab']    ?? 'usuarios',
+        ];
 
+        // Consulta de Usuarios con filtros
+        $query = User::query()->with('rolesa')->withCount('roles'); // Ajustado según tu esquema
 
-        // $areas = Area::get();
-
-        $roles = Role::get();
-
-        $query = User::query();
-
-        if ($request->has('search')) {
-            $searchTerm = $request->input('search');
-            $query->whereRaw(
-                "CONCAT(nombres, ' ', apellido_paterno, ' ', apellido_materno) ILIKE ?",
-                ['%' . $searchTerm . '%']
-            );
+        if ($filters['search']) {
+            $query->where(function($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['search'] . '%')
+                  ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+            });
         }
 
-        $usuarios = $query->orderBy('id', 'desc')->paginate(5);
-        $usuarios->appends(['search' => $request->input('search')]);
-        /*$users = User::with('rolesa')
-            ->select(
-                'id',
-                DB::raw("CONCAT(users.nombres,' ' ,
-                users.apellido_paterno, ' ', users.apellido_materno) 
-        AS nombre_completo"),
-                'users.rol_id',
-                'users.estado',
-                'users.numero_documento',
+        if ($filters['role']) {
+            $query->where('rol_id', $filters['role']);
+        }
 
-                'users.created_at'
-            );*/
+        if ($filters['status'] !== 'all') {
+            $query->where('estado', $filters['status'] === 'active' ? 1 : 0);
+        }
 
-        // return ($users);
-        /*if ($request->ajax()) {
-            return datatables()->of($users)
-                ->toJson();
-        }*/
+        $usuarios = $query->orderBy('id', 'desc')->paginate(10)->withQueryString();
 
+        // Datos para Roles
+        $roles = Role::withCount('users')->get();
+        $rolesActivos = Role::all(); // O filtrar por estado si tienes esa columna
 
+        // Estadísticas para el dashboard superior de la vista
+        $stats = [
+            'usuarios' => User::count(),
+            'activos'  => User::where('estado', 1)->count(),
+            'inactivos'=> User::where('estado', 0)->count(),
+            'roles'    => Role::count(),
+        ];
 
-        return view('usuarios.index', compact('roles', 'usuarios'));
+        return view('usuarios', compact('usuarios', 'roles', 'rolesActivos', 'filters', 'stats'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Contracts\View\View
-     */
-    public function create()
-    {
-        $roles = Role::get();
-        return view('usuarios.create', compact('roles'));
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function store(Request $request)
     {
         $request->validate([
-            'nombres' => 'required|max:100',
-            'apellido_paterno' => 'required|max:100',
-            'apellido_materno' => 'required|max:100',
-            'rol_id' => 'required|exists:roles,id',
-            'login' => 'required',
-            'password' => 'required|max:50|min:4',
-
+            'name'     => 'required|max:100',
+            'email'    => 'required|email|unique:users,email',
+            'role_id'  => 'required|exists:roles,id',
+            'password' => 'required|min:6|confirmed',
         ]);
 
-        $usuario = new User();
-        $usuario->nombres = strtoupper($request->nombres);
-        $usuario->apellido_paterno = strtoupper($request->apellido_paterno);
-        $usuario->apellido_materno = strtoupper($request->apellido_materno);
-        $usuario->password = $request->password;
-        $usuario->numero_documento = $request->numero_documento ?? NULL;
-
-
-        $usuario->rol_id = $request->rol_id;
-        $usuario->usuario = $request->login ?? NULL;
-        $usuario->save(); // No es necesario poner Bycrit ya que en el Modelo hay un metodo
-        // que encripta todo los datos enviados en un Input con name password.
-
-
-        $usuario->roles()->sync([$request->rol_id]);
-
+        $usuario = User::create([
+            'name'    => $request->name,
+            'email'   => $request->email,
+            'password'=> $request->password,
+            'rol_id'  => $request->role_id,
+            'estado'  => $request->estado ?? 1,
+        ]);
 
         return redirect()->route('usuario.index')->with([
-            'ok' => 'enabled',
-            'message' => 'Se acaba de guardar correctamente el registro de',
-            'alert' => 'success',
-            'data' => $usuario->nombres . ' ' . $usuario->apellido_paterno
+            'status'  => 'success',
+            'message' => 'Usuario creado correctamente.',
+            'data'    => $usuario->name
         ]);
     }
 
-
-    public function show(User $usuario)
-    {
-        return view('usuarios.show', compact('usuario'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  User $usuario
-     * @return \Illuminate\Contracts\View\View
-     */
-    public function edit(User $usuario)
-    {
-        $roles = Role::all();
-        $user_roles = $usuario->roles->pluck('id')->toArray(); // Obtiene los IDs de los roles asignados al usuario
-        $roles = Role::get();
-        return view('usuarios.edit', compact('user_roles', 'usuario', 'roles'));
-    }
-    public function editrol(User $usuario)
-    {
-
-        $roles = Role::all();
-
-        return view('usuarios.role', compact('usuario', 'roles'));
-    }
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  User $usuario
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function update(Request $request, User $usuario)
     {
         $request->validate([
-            'nombres' => 'required|max:100',
-            'apellido_paterno' => 'required|max:100',
-            'apellido_materno' => 'required|max:100',
-            'rol_id' => 'required',
-            'login' => 'required'
+            'name'    => 'required|max:100',
+            'email'   => 'required|email|unique:users,email,' . $usuario->id,
+            'role_id' => 'required|exists:roles,id',
         ]);
 
-        $rol_id = $request->rol_id;
-
-        $usuario->update($request->except(['password']));
-
-        $usuario->update([
-            $usuario->nombres = strtoupper($request->nombres),
-            $usuario->apellido_paterno = strtoupper($request->apellido_paterno),
-            $usuario->apellido_materno = strtoupper($request->apellido_materno),
-            $usuario->rol_id = $request->rol_id,
-            $usuario->usuario = $request->login ?? NULL,
-            $usuario->numero_documento = $request->numero_documento ?? NULL,
-            // que encripta todo los datos enviados en un Input con name password.
-        ]);
-        if ($request->password != '') {
-            $usuario->update([
-                $usuario->password = $request->password,
-            ]);
+        $data = $request->only(['name', 'email', 'role_id', 'estado']);
+        if ($request->filled('password')) {
+            $request->validate(['password' => 'min:6|confirmed']);
+            $data['password'] = $request->password;
         }
-       
-        $usuario->roles()->sync([$rol_id]);
+
+        $usuario->update($data);
 
         return redirect()->route('usuario.index')->with([
-            'ok' => 'enabled',
-            'message' => 'Se acaba de actualizar correctamente el registro de',
-            'alert' => 'success',
-            'data' => $usuario->nombres . ' ' . $usuario->apellido_paterno
+            'status'  => 'success',
+            'message' => 'Usuario actualizado correctamente.',
+            'data'    => $usuario->name
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  User $usuario
-     * @return \Illuminate\Http\RedirectResponse
-     */
-
-    public function updaterol(Request $request, User $usuario)
-    {
-        $request->validate([
-            'roles' => 'required'
-        ]);
-
-        $usuario->roles()->sync($request->roles);
-
-        return redirect()->route('usuario.index');
-    }
     public function destroy(User $usuario)
     {
-        $usuario->estado = 2;
-
-        $usuario->save();
+        $usuario->update(['estado' => 0]);
         return redirect()->route('usuario.index')->with([
-            'ok' => 'enabled',
-            'message' => 'Se acaba de deshabilitar el usuario',
-            'alert' => 'danger',
-            'data' => $usuario->nombres . ' ' . $usuario->apellido_paterno
+            'status'  => 'warning',
+            'message' => 'Usuario desactivado.',
+            'data'    => $usuario->name
         ]);
     }
 
     public function activar(User $usuario)
     {
-        $usuario->estado = 1;
-        $usuario->save();
+        $usuario->update(['estado' => 1]);
         return redirect()->route('usuario.index')->with([
-            'ok' => 'enabled',
-            'message' => 'Se acaba de habilitar el usuario',
-            'alert' => 'primary',
-            'data' => $usuario->nombres . ' ' . $usuario->apellido_paterno
+            'status'  => 'success',
+            'message' => 'Usuario activado.',
+            'data'    => $usuario->name
         ]);
     }
 }

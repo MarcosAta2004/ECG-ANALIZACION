@@ -12,7 +12,7 @@ class EstudioController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Imagen::with(['estudio.paciente', 'diagnostico', 'predicciones.ritmo']);
+        $query = \App\Models\Imagen::with(['estudio.paciente', 'estudio.diagnostico', 'prediccion.ritmo']);
 
         // Filtros de búsqueda
         $filters = [
@@ -32,21 +32,21 @@ class EstudioController extends Controller
 
         // Aplicar filtros de estado
         if ($filters['filter'] === 'normal') {
-            $query->whereHas('predicciones.ritmo', function($q){ $q->where('label', 'NORM'); });
+            $query->whereHas('prediccion.ritmo', function($q){ $q->where('label', 'NORM'); });
         } elseif ($filters['filter'] === 'arritmia') {
-            $query->whereHas('predicciones.ritmo', function($q){ $q->where('label', '!=', 'NORM'); });
+            $query->whereHas('prediccion.ritmo', function($q){ $q->where('label', '!=', 'NORM'); });
         } elseif ($filters['filter'] === 'reviewed') {
-            $query->whereHas('diagnostico');
+            $query->whereHas('estudio.diagnostico');
         } elseif ($filters['filter'] === 'unreviewed') {
-            $query->whereDoesntHave('diagnostico');
+            $query->whereDoesntHave('estudio.diagnostico');
         }
 
         $history = $query->orderBy('created_at', 'desc')->paginate(10);
         
         // Formatear items para Alpine.js
         $history->getCollection()->transform(function($img) {
-            $prediccion = $img->predicciones->first();
-            $diagnostico = $img->diagnostico;
+            $prediccion = $img->prediccion;
+            $diagnostico = $img->estudio->diagnostico;
             return [
                 'id' => $img->imagen_id,
                 'filename' => $img->nombre_original ?? $img->filename,
@@ -57,7 +57,7 @@ class EstudioController extends Controller
                 'probability' => $prediccion ? round($prediccion->probabilidad * 100, 1) : 0,
                 'result' => ($prediccion->ritmo->label ?? '') === 'NORM' ? 'normal' : 'arritmia',
                 'doctor_result' => $diagnostico ? (($diagnostico->resultado === 'Normal' || $diagnostico->resultado === 'normal') ? 'normal' : 'arritmia') : null,
-                'doctor_label' => $diagnostico->ritmo->nombre ?? null,
+                'doctor_label' => $diagnostico->ritmoCardiaco->nombre ?? null,
                 'doctor_notes' => $diagnostico->observacion ?? '',
             ];
         });
@@ -72,7 +72,7 @@ class EstudioController extends Controller
 
         $canReview = in_array(session('user.role'), ['Administrador', 'Medico'], true);
 
-        return view('estudios.index', compact('history', 'stats', 'filters', 'canReview'));
+        return view('historial', compact('history', 'stats', 'filters', 'canReview'));
     }
 
     public function store(Request $request)

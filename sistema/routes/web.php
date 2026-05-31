@@ -27,11 +27,15 @@ use App\Http\Controllers\PrefijoPacienteController;
 */
 
 Route::get('/', function () { 
-    return view('auth.inicio-sesion'); 
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+});
+
+Route::get('/login', function () { 
+    return view('autenticacion.inicio-sesion'); 
 })->name('login');
 
 Route::controller(LoginController::class)->group(function () {
-    Route::post('/iniciar-sesion', 'iniciarSesion')->name('iniciarSesion');
+    Route::post('/iniciar-sesion', 'iniciarSesion')->name('login.post');
     Route::post('/logout', 'logout')->name('logout');
 });
 
@@ -45,7 +49,6 @@ Route::middleware(['auth'])->group(function () {
 
     // 1. DASHBOARD & PERFIL
     Route::controller(MenuPrincipalController::class)->group(function () {
-        Route::get('/menu-principal', 'index')->name('menu-principal.index');
         Route::get('/dashboard', 'index')->name('dashboard');
         Route::get('/perfil', 'indexActualizarContrasena')->name('perfil.index');
         Route::post('/perfil/update', 'actualizarContrasena')->name('perfil.actualizarContrasena');
@@ -55,27 +58,27 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('seguridad')->group(function () {
         
         Route::controller(UserController::class)->prefix('usuarios')->group(function () {
-            Route::get('/', 'index')->name('usuario.index');
-            Route::get('create', 'create')->name('usuario.create');
-            Route::post('store', 'store')->name('usuario.store');
-            Route::get('edit/{usuario}', 'edit')->name('usuario.edit');
-            Route::put('update/{usuario}', 'update')->name('usuario.update');
-            Route::delete('delete/{usuario}', 'destroy')->name('usuario.destroy');
-            Route::put('activar/{usuario}', 'activar')->name('usuario.activar');
+            Route::get('/', 'index')->name('usuarios.index');
+            Route::get('create', 'create')->name('usuarios.create');
+            Route::post('store', 'store')->name('usuarios.store');
+            Route::get('edit/{usuario}', 'edit')->name('usuarios.edit');
+            Route::put('update/{usuario}', 'update')->name('usuarios.update');
+            Route::delete('delete/{usuario}', 'destroy')->name('usuarios.destroy');
+            Route::put('activar/{usuario}', 'activar')->name('usuarios.activar');
             
             // Gestión de Roles por Usuario
-            Route::get('{usuario}/roles', 'editrol')->name('usuario.roles');
-            Route::put('{usuario}/roles', 'updaterol')->name('usuario.updaterole');
+            Route::get('{usuario}/roles', 'editrol')->name('usuarios.roles_edit');
+            Route::put('{usuario}/roles', 'updaterol')->name('usuarios.roles_update');
         });
 
         Route::controller(RoleController::class)->prefix('roles')->group(function () {
-            Route::get('/', 'index')->name('role.index');
-            Route::get('create', 'create')->name('role.create');
-            Route::post('store', 'store')->name('role.store');
-            Route::get('show/{role}', 'show')->name('role.show');
-            Route::get('edit/{role}', 'edit')->name('role.edit');
-            Route::put('update/{role}', 'update')->name('role.update');
-            Route::delete('delete/{role}', 'destroy')->name('role.destroy');
+            Route::get('/', 'index')->name('roles.index');
+            Route::get('create', 'create')->name('roles.create');
+            Route::post('store', 'store')->name('roles.store');
+            Route::get('show/{role}', 'show')->name('roles.show');
+            Route::get('edit/{role}', 'edit')->name('roles.edit');
+            Route::put('update/{role}', 'update')->name('roles.update');
+            Route::delete('delete/{role}', 'destroy')->name('roles.destroy');
         });
 
         Route::controller(AuditoriaController::class)->prefix('auditoria')->group(function () {
@@ -126,6 +129,10 @@ Route::middleware(['auth'])->group(function () {
             Route::put('update/{diagnostico}', 'update')->name('diagnosticos.update');
             Route::delete('delete/{diagnostico}', 'destroy')->name('diagnosticos.destroy');
             Route::put('activar/{diagnostico}', 'activar')->name('diagnosticos.activar');
+            
+            // Valoración rápida desde Historial (AJAX)
+            Route::post('{imagen}/review', 'review')->name('diagnosticos.review');
+            Route::delete('{imagen}/review', 'deleteReview')->name('diagnosticos.deleteReview');
         });
     });
 

@@ -30,7 +30,7 @@ class LoginController extends Controller
         if (Auth::attempt($credentials)) {
             ServicioAuditoria::registrar('login', 'Autenticacion', 'users', Auth::id(), 'Inicio de sesion exitoso.', null, ['email' => $user->email ?? $user->usuario], $request);
             $request->session()->regenerate();
-            return redirect()->intended('/menu-principal');
+            return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([
@@ -50,7 +50,7 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
 
         // Redirige al inicio o login
-        return redirect()->route('inicio.login')->with([
+        return redirect()->route('login')->with([
             'ok' => 'enabled',
             'message' => 'Sesión cerrada correctamente',
             'alert' => 'success'

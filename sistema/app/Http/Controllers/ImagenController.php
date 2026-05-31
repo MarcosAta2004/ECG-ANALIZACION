@@ -18,7 +18,7 @@ class ImagenController extends Controller
 {
     public function index(Request $request)
     {
-        return view('imagenes.index');
+        return view('subir-ecg');
     }
 
     public function store(Request $request)

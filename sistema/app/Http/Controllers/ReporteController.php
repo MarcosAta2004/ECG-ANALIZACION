@@ -34,7 +34,7 @@ class ReporteController extends Controller
             'analyses' => \App\Models\Imagen::count(),
         ];
 
-        return view('reporte.index', compact('patients', 'stats'));
+        return view('reportes', compact('patients', 'stats'));
     }
 
     public function download(Request $request)
@@ -155,11 +155,11 @@ class ReporteController extends Controller
     public function descargarPDF($id)
     {
         // 1. Obtener el estudio con todas sus relaciones
-        $estudio = \App\Models\Estudio::with(['paciente', 'diagnostico.ritmoCardiaco', 'prediccion'])->findOrFail($id);
+        $estudio = \App\Models\Estudio::with(['paciente', 'diagnostico.ritmoCardiaco', 'imagen.prediccion.ritmoCardiaco'])->findOrFail($id);
         
         $paciente = $estudio->paciente;
         $diagnostico = $estudio->diagnostico;
-        $ia = $estudio->prediccion;
+        $ia = $estudio->imagen?->prediccion;
         
         // 2. Preparar datos para la vista
         $data = [

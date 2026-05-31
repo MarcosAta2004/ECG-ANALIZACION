@@ -114,4 +114,54 @@ class DiagnosticoController extends Controller
             'data'    => $diagnostico->estudio->paciente->codigo_generado,
         ]);
     }
+
+    /**
+     * Guarda una valoración médica rápida desde el Historial (AJAX)
+     */
+    public function review(Request $request, \App\Models\Imagen $imagen)
+    {
+        $validated = $request->validate([
+            'doctor_result' => 'required|in:normal,arritmia',
+            'doctor_label'  => 'nullable|string',
+            'doctor_notes'  => 'nullable|string',
+        ]);
+
+        $estudio = $imagen->estudio;
+
+        // Intentar encontrar un ritmo cardíaco que coincida
+        $label = ($validated['doctor_result'] === 'normal') ? 'NORM' : 'ARR';
+        $ritmo = \App\Models\RitmoCardiaco::where('label', 'like', "%{$label}%")->first() 
+                 ?? \App\Models\RitmoCardiaco::first();
+
+        $diagnostico = \App\Models\Diagnostico::updateOrCreate(
+            ['estudio_id' => $estudio->estudio_id],
+            [
+                'ritmo_id'      => $ritmo->ritmo_id,
+                'medico_id'     => Auth::id(),
+                'resultado'     => ($validated['doctor_result'] === 'normal' ? 'Normal' : 'Arritmia'),
+                'observacion'   => $validated['doctor_notes'],
+                'descripcion'   => $validated['doctor_label'],
+                'fecha_revision'=> now(),
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Valoración guardada',
+            'reviewed_at' => $diagnostico->fecha_revision->format('d/m/Y H:i')
+        ]);
+    }
+
+    /**
+     * Elimina una valoración médica desde el Historial (AJAX)
+     */
+    public function deleteReview(\App\Models\Imagen $imagen)
+    {
+        $estudio = $imagen->estudio;
+        if ($estudio->diagnostico) {
+            $estudio->diagnostico->delete();
+        }
+
+        return response()->json(['success' => true, 'message' => 'Valoración eliminada']);
+    }
 }

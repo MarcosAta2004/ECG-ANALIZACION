@@ -30,7 +30,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('reports.download') }}" class="card animate-fade-in-up" style="animation-delay:120ms;">
+    <form method="POST" action="{{ route('reportes.download') }}" class="card animate-fade-in-up" style="animation-delay:120ms;">
         @csrf
 
         <div class="flex flex-col gap-5">
@@ -77,15 +77,15 @@
                             <label class="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-card transition-colors">
                                 <input type="checkbox"
                                        name="patients[]"
-                                       value="{{ $patient->patient_identifier }}"
+                                       value="{{ $patient['patient_identifier'] }}"
                                        class="mt-1"
                                        :disabled="mode !== 'selected'">
                                 <span>
                                     <span class="block font-mono text-sm font-semibold text-primary">
-                                        {{ $patient->patient_identifier }}
+                                        {{ $patient['patient_identifier'] }}
                                     </span>
                                     <span class="block text-xs text-muted-foreground mt-0.5">
-                                        {{ number_format($patient->total) }} analisis
+                                        {{ number_format($patient['total']) }} analisis
                                     </span>
                                 </span>
                             </label>
