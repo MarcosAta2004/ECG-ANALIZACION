@@ -28,6 +28,14 @@ class LoginController extends Controller
         }
 
         if (Auth::attempt($credentials)) {
+            $authenticatedUser = Auth::user();
+            $request->session()->put('user', [
+                'id' => $authenticatedUser?->id,
+                'email' => $authenticatedUser?->email,
+                'name' => $authenticatedUser?->name,
+                'role_id' => $authenticatedUser?->rol_id,
+                'role' => $authenticatedUser?->rolesa?->name ?? '',
+            ]);
             ServicioAuditoria::registrar('login', 'Autenticacion', 'users', Auth::id(), 'Inicio de sesion exitoso.', null, ['email' => $user->email ?? $user->usuario], $request);
             $request->session()->regenerate();
             return redirect()->intended('/dashboard');

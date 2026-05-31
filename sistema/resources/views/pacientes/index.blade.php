@@ -12,7 +12,7 @@
 @endsection
 
 @section('content')
-    <div class="space-y-6" x-data="patientsPage()">
+    <div class="space-y-6" x-data="patientsPage">
         @if (session('ok'))
             <div class="rounded-xl px-4 py-3 text-sm font-medium animate-fade-in-up"
                 style="background:hsl(var(--success)/0.1);color:hsl(var(--success));border:1px solid hsl(var(--success)/0.2);">
@@ -193,19 +193,4 @@
             </form>
         </div>
     </div>
-
-    <script>
-        function patientsPage() {
-            return {
-                editModal: {
-                    open: false,
-                    data: {}
-                },
-                openEdit(paciente) {
-                    this.editModal.data = { ...paciente };
-                    this.editModal.open = true;
-                }
-            }
-        }
-    </script>
 @endsection

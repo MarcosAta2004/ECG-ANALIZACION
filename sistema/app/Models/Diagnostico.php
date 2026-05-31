@@ -11,6 +11,17 @@ class Diagnostico extends Model
     protected $table      = 'diagnosticos';
     protected $primaryKey = 'diagnostico_id';
 
+    protected $fillable = [
+        'estudio_id',
+        'ritmo_id',
+        'medico_id',
+        'concordancia',
+        'descripcion',
+        'observacion',
+        'fecha_revision',
+        'estado',
+    ];
+
     // Pertenece a un estudio
     public function estudio()
     {

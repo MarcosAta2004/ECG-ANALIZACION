@@ -72,10 +72,18 @@ body {
     -webkit-font-smoothing: antialiased;
     margin: 0;
 }
-@media (min-width: 1024px) {
-    body { padding-left: 16rem; }
-}
 h1,h2,h3,h4,h5,h6 { font-weight: 600; letter-spacing: -0.025em; }
+
+.app-shell {
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+    .app-shell {
+        margin-left: 16rem;
+        width: calc(100% - 16rem);
+    }
+}
 
 /* ── Colores ── */
 .bg-background  { background-color: hsl(var(--background)); }
@@ -113,6 +121,13 @@ h1,h2,h3,h4,h5,h6 { font-weight: 600; letter-spacing: -0.025em; }
     background: hsl(var(--card) / 0.8);
     backdrop-filter: blur(16px);
     border: 1px solid hsl(var(--border) / 0.5);
+}
+
+.surface-card-glass {
+    background: hsl(var(--card) / 0.82);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 -8px 24px hsl(var(--foreground) / 0.06);
 }
 
 /* ── Sombras ── */

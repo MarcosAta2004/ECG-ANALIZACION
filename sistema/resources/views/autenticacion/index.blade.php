@@ -46,13 +46,13 @@
                              style="background:hsl(var(--primary)/0.3);filter:blur(20px);"></div>
                     </div>
                 </div>
-                <h1 class="text-3xl font-bold gradient-text mb-2">ECG Analyzer</h1>
+                <h1 class="text-3xl font-bold gradient-text mb-2">ECG Analizacion</h1>
                 <p class="text-muted-foreground">Sistema de Análisis de Electrocardiogramas</p>
             </div>
 
             {{-- Formulario --}}
             <form method="POST" action="{{ route('login.post') }}"
-                  x-data="loginForm()" @submit.prevent="handleSubmit">
+                  x-data="loginForm" @submit.prevent="handleSubmit">
                 @csrf
 
                 {{-- Usuario --}}
@@ -149,16 +149,4 @@
         </div>
     </div>
 </div>
-
-<script>
-function loginForm() {
-    return {
-        loading: false,
-        handleSubmit(e) {
-            this.loading = true;
-            e.target.submit();
-        }
-    }
-}
-</script>
 @endsection

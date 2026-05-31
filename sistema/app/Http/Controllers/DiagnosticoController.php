@@ -138,7 +138,6 @@ class DiagnosticoController extends Controller
             [
                 'ritmo_id'      => $ritmo->ritmo_id,
                 'medico_id'     => Auth::id(),
-                'resultado'     => ($validated['doctor_result'] === 'normal' ? 'Normal' : 'Arritmia'),
                 'observacion'   => $validated['doctor_notes'],
                 'descripcion'   => $validated['doctor_label'],
                 'fecha_revision'=> now(),

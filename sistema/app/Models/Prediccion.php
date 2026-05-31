@@ -11,6 +11,10 @@ class Prediccion extends Model
     protected $table      = 'predicciones';
     protected $primaryKey = 'prediccion_id';
 
+    protected $casts = [
+        'top_predicciones' => 'array',
+    ];
+
     // Pertenece a una imagen ECG
     public function imagen()
     {

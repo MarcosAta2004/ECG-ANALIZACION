@@ -1,49 +1,59 @@
 # Sistema de Análisis y Clasificación de ECG para Detección de Arritmias
 
-Este sistema consta de dos componentes principales:
-1. **Modelo de IA (Backend de Inferencia):** Una API construida con **FastAPI** (Python) que procesa imágenes y archivos PDF de electrocardiogramas (ECG) de 12 derivaciones, realiza la digitalización de las señales y predice posibles arritmias utilizando un modelo de aprendizaje profundo (`.keras`).
-2. **Plataforma Web (Frontend/Backend de Control):** Una aplicación web en **Laravel 12** con **Vite (TailwindCSS v4 y Alpine.js)** que permite a los usuarios gestionar pacientes, subir y visualizar análisis de ECG, descargar reportes y estadísticas, y registrar valoraciones de confirmación médica.
+Este sistema consta de dos componentes principales que trabajan de manera conjunta para digitalizar y clasificar señales de electrocardiogramas (ECG) de 12 derivaciones:
+
+1. **Servidor de Inferencia (Backend de IA):** Una API construida con **FastAPI** (Python) que recibe archivos PDF, imágenes o archivos de texto/CSV de ECG, realiza la digitalización de las señales (remoción de cuadrículas y extracción de curvas) y predice posibles arritmias cardiacas utilizando un modelo de aprendizaje profundo (`modelo_arritmias_Fina_v4.keras`).
+2. **Plataforma Web (Frontend/Control de Laravel):** Una aplicación web en **Laravel 12** con **Vite (TailwindCSS y Alpine.js)** que permite gestionar expedientes de pacientes, subir ECGs, visualizar las señales digitalizadas y la predicción del modelo, descargar reportes clínicos en PDF y registrar valoraciones de médicos especialistas.
 
 ---
 
-## 🛠️ Requisitos Previos
+## 🛠️ Requisitos Previos del Sistema
 
-Asegúrate de tener instalados los siguientes componentes en tu sistema:
+Asegúrate de contar con los siguientes requisitos en el entorno donde vayas a desplegar la aplicación:
 
-* **Para el Servidor Web (Laravel):**
-  * **PHP >= 8.2**
-  * **Composer**
-  * **Node.js (LTS recomendado)** y **npm**
-  * **MySQL** o **MariaDB** (u otro motor de base de datos compatible)
+### 1. Entorno del Modelo de IA (Python)
+* **Python == 3.11.x** (Verificado y recomendado en **Python 3.11.9**).
+  > [!IMPORTANT]
+  > **Compatibilidad de Python y TensorFlow:** TensorFlow es altamente sensible a la versión de Python instalada. La versión **3.11.9** está completamente validada. No se recomienda usar Python 3.12+ ya que algunas librerías como TensorFlow 2.15 requieren adaptaciones complejas para compilar en entornos más nuevos.
+* **Poppler** (Herramienta obligatoria para que la librería `pdf2image` pueda convertir las páginas del PDF del ECG en imágenes legibles para el pipeline de procesamiento).
+  
+#### 📥 Instrucciones de instalación de Poppler por Sistema Operativo:
+* **Windows:**
+  1. Descarga la versión compilada más reciente para Windows (por ejemplo, desde el repositorio de [oschwartz10612](https://github.com/oschwartz10612/poppler-windows/releases)).
+  2. Descomprime el archivo en un directorio permanente (ej. `C:\poppler`).
+  3. Agrega la ruta de la carpeta `bin` (ej. `C:\poppler\Library\bin` o `C:\poppler\bin`) a la variable de entorno `PATH` del sistema.
+* **macOS:**
+  Instala vía Homebrew ejecutando en la terminal:
+  ```bash
+  brew install poppler
+  ```
+* **Linux (Ubuntu/Debian):**
+  Instala mediante apt:
+  ```bash
+  sudo apt-get update
+  sudo apt-get install poppler-utils
+  ```
 
-* **Para el Servidor del Modelo (Python):**
-  * **Python >= 3.9** y **pip**
-  * **Poppler** (Obligatorio para la conversión de PDF a imágenes mediante la librería `pdf2image` de Python).
-    * *En Windows:* Descarga Poppler (por ejemplo, desde [GitHub de @oschwartz10612](https://github.com/oschwartz10612/poppler-windows/releases)), descomprímelo y añade la carpeta `bin` a las variables de entorno del sistema (`PATH`).
+### 2. Entorno de Base de Datos y Web (Laravel)
+* **PHP >= 8.2** con las extensiones comunes habilitadas (`pdo_mysql`, `mbstring`, `openssl`, `xml`, `zip`, `gd`, `ctype`).
+* **Composer** (gestor de dependencias de PHP).
+* **Node.js (LTS)** y **npm** (para compilar y servir los assets de JavaScript/CSS).
+* **MySQL >= 8.0** o **MariaDB** como motor de base de datos.
 
 ---
 
-## ⚙️ Configuración del Sistema
+## ⚙️ Configuración y Despliegue del Sistema
 
-### 1. Base de Datos (MySQL)
-1. Inicia tu servidor MySQL.
-2. Crea una base de datos llamada `bd_arritmias`:
-   ```sql
-   CREATE DATABASE bd_arritmias CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
-3. Importa el archivo de base de datos con la estructura básica de tablas y disparadores (*triggers*):
-   * El script SQL se encuentra en: `sistema/database/bd_arritmias_mysql.sql`
-   * Puedes importarlo mediante la consola de MySQL o tu gestor de base de datos preferido (phpMyAdmin, DBeaver, etc.):
-     ```bash
-     mysql -u tu_usuario -p bd_arritmias < sistema/database/bd_arritmias_mysql.sql
-     ```
+Sigue los pasos a continuación para configurar ambos entornos en cualquier ordenador de forma local.
 
-### 2. Configuración del Servidor del Modelo (Python)
-1. Navega a la carpeta del modelo:
+### Paso 1: Configurar el Servidor del Modelo (Python FastAPI)
+
+1. Abre una terminal y colócate en la carpeta `/modelo` del proyecto:
    ```bash
    cd modelo
    ```
-2. (Recomendado) Crea e inicia un entorno virtual:
+
+2. Crea un entorno virtual para aislar las dependencias:
    ```bash
    # En Windows
    python -m venv venv
@@ -53,37 +63,70 @@ Asegúrate de tener instalados los siguientes componentes en tu sistema:
    python3 -m venv venv
    source venv/bin/activate
    ```
-3. Instala las dependencias necesarias indicadas en `requirements.txt`:
+
+3. Instala los paquetes requeridos definidos en `requirements.txt`:
    ```bash
+   python -m pip install --upgrade pip
    pip install -r requirements.txt
    ```
+   
+   > [!IMPORTANT]
+   > **Dependencias Pinned (Congeladas):**
+   > Las dependencias en `requirements.txt` han sido fijadas a las versiones exactas que han sido probadas en producción (como `tensorflow==2.15.0` y `numpy==1.26.4`). Esto previene el error crítico que ocurre con las versiones de TensorFlow inferiores a 2.16 cuando se intenta utilizar NumPy 2.x, lo cual produce fallos del tipo `AttributeError: module 'numpy' has no attribute 'typeDict'`.
 
-### 3. Configuración del Proyecto Web (Laravel)
-1. Navega a la carpeta del sistema Laravel:
+4. **Colocar el Archivo del Modelo:**
+   Asegúrate de que el archivo neuronal con el nombre exacto `modelo_arritmias_Fina_v4.keras` se encuentra dentro de la carpeta `modelo/`.
+
+---
+
+### Paso 2: Configurar la Plataforma Web (Laravel 12)
+
+1. En una nueva terminal, colócate en la carpeta `/sistema` del proyecto:
    ```bash
    cd sistema
    ```
-2. Copia el archivo de configuración de entorno y genera la clave de aplicación:
+
+2. Crea el archivo de variables de entorno `.env`:
    ```bash
    cp .env.example .env
+   ```
+
+3. Genera la clave de seguridad de la aplicación:
+   ```bash
    php artisan key:generate
    ```
-3. Abre el archivo `.env` y edita las siguientes variables clave según tus credenciales locales:
+
+4. **Configurar el archivo `.env`:**
+   Abre el archivo `.env` y edita las siguientes líneas clave con las credenciales de tu base de datos local y la dirección de la API de inferencia:
    ```env
+   APP_TIMEZONE=America/Lima
+
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
    DB_PORT=3306
    DB_DATABASE=bd_arritmias
-   DB_USERNAME=tu_usuario
-   DB_PASSWORD=tu_contrasena
+   DB_USERNAME=tu_usuario_mysql
+   DB_PASSWORD=tu_contraseña_mysql
 
-   # Dirección en la que correrá el backend de Python
+   # URL de conexión con el Servidor del Modelo de Python
    ECG_API_URL=http://localhost:8001
    ```
-4. Instala las dependencias de PHP y JavaScript compilando los recursos iniciales:
+
+5. **Instalar Dependencias de PHP y Node.js:**
    ```bash
    composer install
    npm install
+   ```
+
+6. **Inicializar la Base de Datos:**
+   Crea la base de datos `bd_arritmias` en tu servidor de MySQL y luego ejecuta las migraciones de Laravel junto con los seeders iniciales para poblar los datos clínicos base (roles, usuarios de prueba, tipos de identidad, ritmos, etc.):
+   ```bash
+   php artisan migrate --seed
+   ```
+
+7. **Compilar Recursos del Frontend:**
+   Compila las hojas de estilo y scripts JS de TailwindCSS utilizando Vite:
+   ```bash
    npm run build
    ```
 
@@ -91,57 +134,49 @@ Asegúrate de tener instalados los siguientes componentes en tu sistema:
 
 ## 🚀 Ejecución del Sistema
 
-Para arrancar el sistema en modo de desarrollo, debes iniciar **ambos servidores** al mismo tiempo:
+Para que el sistema funcione normalmente, debes tener encendidos **tanto el servidor de Laravel como el servidor FastAPI de Python** de forma simultánea.
 
-### Opción A: Ejecución Manual Paso a Paso (Recomendado)
-
-#### Paso 1: Iniciar el Servidor de Inferencia (Python FastAPI)
-1. Abre una terminal en la raíz del proyecto.
-2. Navega a la carpeta del modelo e inicia la API con Uvicorn:
+### Terminal A: Levantar el Servidor de Inferencia (Python)
+1. Navega a `modelo/` y activa el entorno virtual.
+2. Inicia el servidor mediante Uvicorn:
    ```bash
-   cd modelo
-   # (Asegúrate de tener el entorno virtual activo)
    uvicorn api:app --host 0.0.0.0 --port 8001 --reload
    ```
-   *El servidor API estará disponible en `http://localhost:8001`.*
+   *La API REST de predicción estará escuchando peticiones en `http://localhost:8001`.*
 
-#### Paso 2: Iniciar la Aplicación Web (Laravel & Vite)
-1. Abre otra terminal independiente en la raíz del proyecto.
-2. Navega a la carpeta `sistema/` y arranca los servidores de desarrollo de Laravel y Vite:
+### Terminal B: Levantar el Servidor de la Plataforma Web (Laravel)
+1. Navega a `sistema/` e inicia el servidor local de desarrollo de PHP:
    ```bash
-   cd sistema
-   # Consola de Laravel
    php artisan serve
-   
-   # Abre otra consola en la carpeta 'sistema' e inicia el compilador Vite
-   npm run dev
    ```
-   *La aplicación web estará disponible en `http://127.0.0.1:8000` (o el puerto que indique Laravel).*
+   *La plataforma web estará accesible en `http://127.0.0.1:8000`.*
+
+### Terminal C: Servidor de Desarrollo Frontend (Opcional)
+Si vas a realizar modificaciones estéticas o lógicas en tiempo real sobre las vistas Blade o componentes Alpine.js, inicia el servidor de desarrollo de Vite:
+```bash
+cd sistema
+npm run dev
+```
 
 ---
 
-### Opción B: Ejecución Concurrente Rápida (Solo Laravel)
-Si tienes configurado el entorno y deseas ejecutar todo el backend de Laravel (servidor, cola de procesos, visor de logs y Vite) con un único comando:
-1. Navega a la carpeta `sistema/`:
-   ```bash
-   cd sistema
+## 🧪 Verificación de la Conexión
+
+Una vez que ambos servidores estén encendidos, puedes comprobar la correcta comunicación e inicialización del modelo de la siguiente forma:
+
+1. Ejecuta una petición al endpoint de salud del servidor de Python:
+   * **En Windows (PowerShell):**
+     ```powershell
+     curl.exe -s http://localhost:8001/health
+     ```
+   * **En macOS/Linux (Bash):**
+     ```bash
+     curl -s http://localhost:8001/health
+     ```
+
+2. Deberías obtener una respuesta JSON confirmando el estado correcto de conexión y la carga del modelo:
+   ```json
+   {"status":"ok","model":"modelo_arritmias_Fina_v4.keras"}
    ```
-2. Ejecuta el script configurado en Composer:
-   ```bash
-   composer run dev
-   ```
-   *Nota: Recuerda que aún debes levantar el Servidor de Inferencia (Python FastAPI) en una consola aparte.*
 
----
-
-## 📁 Estructura del Proyecto
-
-* **`/modelo`**: Contiene la lógica en Python.
-  * `api.py`: Servidor FastAPI REST expone los endpoints `/predict` y `/preview`.
-  * `pipeline_unificado.py`: Controla la carga de PDFs/imágenes, extracción de señal, remoción de cuadrícula y digitalización.
-  * `modelo_arritmias_5seg.keras`: Archivo del modelo neuronal entrenado para clasificar ECG.
-  * `rois_derivaciones.json`: Coordenadas de calibración para las 12 derivaciones estándar de ECG.
-* **`/sistema`**: Contiene la aplicación web Laravel.
-  * `app/Http/Controllers/`: Controladores para Autenticación, Dashboard, Historial, Reportes y Subida de archivos.
-  * `database/bd_arritmias_mysql.sql`: Estructura e inserciones iniciales para la base de datos MySQL.
-  * `resources/views/`: Interfaces HTML del sistema (autenticación, vistas de análisis, resúmenes interactivos).
+Si obtienes esa respuesta, el sistema está completamente configurado y listo para digitalizar y clasificar electrocardiogramas en producción o desarrollo local.

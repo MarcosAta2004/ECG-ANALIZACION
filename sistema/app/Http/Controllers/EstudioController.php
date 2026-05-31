@@ -70,9 +70,10 @@ class EstudioController extends Controller
             'revisados' => \App\Models\Diagnostico::count(),
         ];
 
-        $canReview = in_array(session('user.role'), ['Administrador', 'Medico'], true);
+        $roleName = mb_strtoupper((string) session('user.role'), 'UTF-8');
+        $canReview = in_array($roleName, ['ADMINISTRADOR', 'CARDIOLOGO'], true);
 
-        return view('historial', compact('history', 'stats', 'filters', 'canReview'));
+        return view('historial.index', compact('history', 'stats', 'filters', 'canReview'));
     }
 
     public function store(Request $request)

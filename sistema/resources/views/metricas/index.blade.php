@@ -273,7 +273,7 @@
     }
 </style>
 
-<div class="space-y-6" x-data="metricsPage()" x-init="init()">
+<div class="space-y-6" x-data="metricsPage({ dashboardData: {{ Js::from($dashboardData) }} })" x-init="init()">
     <section class="dash-panel p-4 sm:p-5 animate-fade-in-up">
         <form method="GET" action="{{ route('dashboard') }}" class="filter-panel">
             <div class="filter-intro">
@@ -387,10 +387,11 @@
                         <line x1="{{ $svg['padding'] }}" y1="{{ $plotBottom }}" x2="{{ $plotRight }}" y2="{{ $svg['padding'] }}"
                               stroke="hsl(var(--muted-foreground) / 0.35)" stroke-dasharray="6 5" />
 
-                        <polyline points="{{ $rocData['area_points'] }}"
-                                  fill="hsl(var(--primary) / 0.10)" stroke="none" />
-                        <polyline points="{{ $rocData['line_points'] }}"
-                                  fill="none" stroke="hsl(var(--primary))" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+                        <path d="{{ $rocData['area_path'] }}"
+                              fill="hsl(var(--primary) / 0.05)" stroke="none" />
+                        <path d="{{ $rocData['line_path'] }}"
+                              fill="none" stroke="hsl(var(--primary))" stroke-width="2.5"
+                              stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />
 
                         <circle cx="{{ $rocData['svg']['best_x'] }}" cy="{{ $rocData['svg']['best_y'] }}" r="5"
                                 fill="hsl(var(--primary))" stroke="hsl(var(--card))" stroke-width="2" />
@@ -525,80 +526,4 @@
     </section>
 </div>
 
-<script>
-function metricsPage() {
-    const dashboardData = @json($dashboardData);
-
-    return {
-        animated: false,
-        metrics: dashboardData.metricCards ?? [],
-        secondary: dashboardData.secondaryCards ?? [],
-        metricDisplay: {},
-        secondaryDisplay: {},
-
-        init() {
-            this.metrics.forEach((metric) => {
-                this.metricDisplay[metric.key] = '0.0%';
-            });
-
-            this.secondary.forEach((card) => {
-                this.secondaryDisplay[card.key] = card.format === 'score' ? '0.000' : '0.0%';
-            });
-
-            setTimeout(() => {
-                this.animated = true;
-                this.animateMetrics();
-                this.animateSecondary();
-            }, 250);
-        },
-
-        animateMetrics() {
-            const duration = 1200;
-            const start = performance.now();
-            const targets = Object.fromEntries(this.metrics.map((metric) => [metric.key, Number(metric.value) || 0]));
-
-            const tick = (now) => {
-                const t = Math.min((now - start) / duration, 1);
-                const ease = 1 - Math.pow(1 - t, 3);
-
-                Object.keys(targets).forEach((key) => {
-                    this.metricDisplay[key] = `${(targets[key] * ease).toFixed(1)}%`;
-                });
-
-                if (t < 1) {
-                    requestAnimationFrame(tick);
-                }
-            };
-
-            requestAnimationFrame(tick);
-        },
-
-        animateSecondary() {
-            const duration = 1200;
-            const start = performance.now();
-
-            const tick = (now) => {
-                const t = Math.min((now - start) / duration, 1);
-                const ease = 1 - Math.pow(1 - t, 3);
-
-                this.secondary.forEach((card) => {
-                    const target = Number(card.value) || 0;
-
-                    if (card.format === 'score') {
-                        this.secondaryDisplay[card.key] = (target * ease).toFixed(3);
-                    } else {
-                        this.secondaryDisplay[card.key] = `${(target * 100 * ease).toFixed(1)}%`;
-                    }
-                });
-
-                if (t < 1) {
-                    requestAnimationFrame(tick);
-                }
-            };
-
-            requestAnimationFrame(tick);
-        },
-    };
-}
-</script>
 @endsection

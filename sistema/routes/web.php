@@ -31,7 +31,7 @@ Route::get('/', function () {
 });
 
 Route::get('/login', function () { 
-    return view('autenticacion.inicio-sesion'); 
+    return view('autenticacion.index'); 
 })->name('login');
 
 Route::controller(LoginController::class)->group(function () {
@@ -50,12 +50,14 @@ Route::middleware(['auth'])->group(function () {
     // 1. DASHBOARD & PERFIL
     Route::controller(MenuPrincipalController::class)->group(function () {
         Route::get('/dashboard', 'index')->name('dashboard');
+        Route::get('/resumen', 'index')->name('resumen');
+        Route::get('/dashboard/statistics/pdf', 'downloadStatisticsPdf')->name('dashboard.statistics.pdf');
         Route::get('/perfil', 'indexActualizarContrasena')->name('perfil.index');
         Route::post('/perfil/update', 'actualizarContrasena')->name('perfil.actualizarContrasena');
     });
 
     // 2. MODULO SEGURIDAD
-    Route::prefix('seguridad')->group(function () {
+    Route::prefix('seguridad')->middleware(['rol:administrador'])->group(function () {
         
         Route::controller(UserController::class)->prefix('usuarios')->group(function () {
             Route::get('/', 'index')->name('usuarios.index');
@@ -88,6 +90,10 @@ Route::middleware(['auth'])->group(function () {
 
     // 3. MODULO CLÍNICO (Análisis ECG)
     Route::prefix('clinico')->group(function () {
+
+        Route::get('/history', [EstudioController::class, 'index'])->name('history');
+        Route::get('/upload', [ImagenController::class, 'index'])->name('upload');
+        Route::get('/reports', [ReporteController::class, 'index'])->name('reports');
 
         Route::controller(PacienteController::class)->prefix('pacientes')->group(function () {
             Route::get('/', 'index')->name('pacientes.index');
@@ -131,13 +137,15 @@ Route::middleware(['auth'])->group(function () {
             Route::put('activar/{diagnostico}', 'activar')->name('diagnosticos.activar');
             
             // Valoración rápida desde Historial (AJAX)
-            Route::post('{imagen}/review', 'review')->name('diagnosticos.review');
-            Route::delete('{imagen}/review', 'deleteReview')->name('diagnosticos.deleteReview');
+            Route::middleware(['rol:administrador,cardiologo'])->group(function () {
+                Route::post('{imagen}/review', 'review')->name('diagnosticos.review');
+                Route::delete('{imagen}/review', 'deleteReview')->name('diagnosticos.deleteReview');
+            });
         });
     });
 
     // 4. MODULO MANTENIMIENTOS
-    Route::prefix('mantenimientos')->group(function () {
+    Route::prefix('mantenimientos')->middleware(['rol:administrador'])->group(function () {
 
         Route::controller(RitmoCardiacoController::class)->prefix('ritmos-cardiacos')->group(function () {
             Route::get('/', 'index')->name('ritmos-cardiacos.index');
@@ -195,4 +203,3 @@ Route::middleware(['auth'])->group(function () {
     // RUTA PARA DESCARGAR EL REPORTE PDF DEL ESTUDIO (PROTEGIDA)
     Route::get('reportes/estudio/{id}/pdf', [App\Http\Controllers\ReporteController::class, 'descargarPDF'])->name('reportes.estudio.pdf');
 });
-

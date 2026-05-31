@@ -40,30 +40,30 @@
             </label>
             <label class="filter-field">
                 <span class="filter-label">Usuario</span>
-                <select name="user" class="input-field">
+                <select name="usuario" class="input-field">
                     <option value="">Todos</option>
                     @foreach($usuarios as $usuario)
-                        <option value="{{ $usuario->id }}" @selected((string) $filters['user'] === (string) $usuario->id)>
-                            {{ $usuario->name }}
+                        <option value="{{ $usuario->id }}" @selected((string) ($filters['usuario'] ?? '') === (string) $usuario->id)>
+                            {{ $usuario->name ?? trim($usuario->nombres . ' ' . $usuario->apellido_paterno . ' ' . $usuario->apellido_materno) }}
                         </option>
                     @endforeach
                 </select>
             </label>
             <label class="filter-field">
                 <span class="filter-label">Modulo</span>
-                <select name="module" class="input-field">
+                <select name="modulo" class="input-field">
                     <option value="">Todos</option>
                     @foreach($modulos as $modulo)
-                        <option value="{{ $modulo }}" @selected($filters['module'] === $modulo)>{{ $modulo }}</option>
+                        <option value="{{ $modulo }}" @selected(($filters['modulo'] ?? '') === $modulo)>{{ $modulo }}</option>
                     @endforeach
                 </select>
             </label>
             <label class="filter-field">
                 <span class="filter-label">Accion</span>
-                <select name="action" class="input-field">
+                <select name="accion" class="input-field">
                     <option value="">Todas</option>
                     @foreach($acciones as $accion)
-                        <option value="{{ $accion }}" @selected($filters['action'] === $accion)>{{ $accion }}</option>
+                        <option value="{{ $accion }}" @selected(($filters['accion'] ?? '') === $accion)>{{ $accion }}</option>
                     @endforeach
                 </select>
             </label>
@@ -75,11 +75,11 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
             <label class="filter-field">
                 <span class="filter-label">Desde</span>
-                <input type="date" name="from" value="{{ $filters['from'] }}" class="input-field" />
+                <input type="date" name="desde" value="{{ $filters['desde'] ?? '' }}" class="input-field" />
             </label>
             <label class="filter-field">
                 <span class="filter-label">Hasta</span>
-                <input type="date" name="to" value="{{ $filters['to'] }}" class="input-field" />
+                <input type="date" name="hasta" value="{{ $filters['hasta'] ?? '' }}" class="input-field" />
             </label>
         </div>
     </form>
@@ -108,7 +108,9 @@
                             </td>
                             <td>
                                 <div class="flex flex-col">
-                                    <span class="font-medium">{{ $evento->usuario?->name ?? 'Sistema' }}</span>
+                                    <span class="font-medium">
+                                        {{ (($evento->usuario?->name ?? trim(($evento->usuario?->nombres ?? '') . ' ' . ($evento->usuario?->apellido_paterno ?? '') . ' ' . ($evento->usuario?->apellido_materno ?? ''))) !== '') ? ($evento->usuario?->name ?? trim(($evento->usuario?->nombres ?? '') . ' ' . ($evento->usuario?->apellido_paterno ?? '') . ' ' . ($evento->usuario?->apellido_materno ?? ''))) : 'Sistema' }}
+                                    </span>
                                     <span class="text-xs text-muted-foreground">{{ $evento->usuario?->email ?? 'Sin usuario' }}</span>
                                 </div>
                             </td>
@@ -146,7 +148,9 @@
                             <p class="font-semibold">{{ $evento->modulo }} - {{ $evento->accion }}</p>
                             <p class="text-xs text-muted-foreground">{{ $evento->created_at?->format('Y-m-d H:i:s') }}</p>
                         </div>
-                        <span class="badge badge-success">{{ $evento->usuario?->name ?? 'Sistema' }}</span>
+                        <span class="badge badge-success">
+                            {{ (($evento->usuario?->name ?? trim(($evento->usuario?->nombres ?? '') . ' ' . ($evento->usuario?->apellido_paterno ?? '') . ' ' . ($evento->usuario?->apellido_materno ?? ''))) !== '') ? ($evento->usuario?->name ?? trim(($evento->usuario?->nombres ?? '') . ' ' . ($evento->usuario?->apellido_paterno ?? '') . ' ' . ($evento->usuario?->apellido_materno ?? ''))) : 'Sistema' }}
+                        </span>
                     </div>
                     <p class="text-sm">{{ $evento->descripcion ?? 'Sin descripcion' }}</p>
                     <p class="text-xs text-muted-foreground">{{ $evento->entidad ?? '-' }} {{ $evento->entidad_id ? '#' . $evento->entidad_id : '' }}</p>

@@ -3,7 +3,7 @@
 @section('title', 'Historial')
 
 @php
-    $canReview = in_array(session('user.role'), ['Administrador', 'Medico'], true);
+    $canReview = in_array(mb_strtoupper((string) session('user.role'), 'UTF-8'), ['ADMINISTRADOR', 'CARDIOLOGO'], true);
 @endphp
 
 @section('page-header')
@@ -22,6 +22,8 @@
         history: {{ Js::from($history->items()) }},
         csrf: '{{ csrf_token() }}',
         canReview: {{ Js::from($canReview) }},
+        reviewUrlTemplate: '{{ route('diagnosticos.review', ['imagen' => '__ID__']) }}',
+        reviewDeleteUrlTemplate: '{{ route('diagnosticos.deleteReview', ['imagen' => '__ID__']) }}',
     })"
 >
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up">
@@ -279,122 +281,4 @@
         </div>
     @endif
 </div>
-
-<script>
-function historyPage(config) {
-    return {
-        history: config.history ?? [],
-        csrf: config.csrf,
-        canReview: Boolean(config.canReview),
-        reviewModal: {
-            open: false,
-            id: null,
-            result: '',
-            label: '',
-            notes: '',
-            saving: false,
-            error: '',
-        },
-
-        findHistoryItem(id) {
-            return this.history.find((item) => item.id === id) ?? null;
-        },
-
-        openReview(item) {
-            if (!this.canReview) {
-                return;
-            }
-
-            this.reviewModal = {
-                open: true,
-                id: item.id,
-                result: item.doctor_result || '',
-                label: item.doctor_label || '',
-                notes: item.doctor_notes || '',
-                saving: false,
-                error: '',
-            };
-        },
-
-        async submitReview() {
-            if (!this.reviewModal.result) {
-                this.reviewModal.error = 'Selecciona un resultado medico.';
-                return;
-            }
-
-            this.reviewModal.saving = true;
-            this.reviewModal.error = '';
-
-            try {
-                const resp = await fetch(`/clinico/diagnosticos/${this.reviewModal.id}/review`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': this.csrf,
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        doctor_result: this.reviewModal.result,
-                        doctor_label: this.reviewModal.label,
-                        doctor_notes: this.reviewModal.notes,
-                    }),
-                });
-
-                const payload = await resp.json().catch(() => ({}));
-                if (!resp.ok) {
-                    throw new Error(payload.message || payload.error || 'No se pudo guardar la valoracion.');
-                }
-
-                const item = this.findHistoryItem(this.reviewModal.id);
-                if (item) {
-                    item.doctor_result = this.reviewModal.result;
-                    item.doctor_label = this.reviewModal.label;
-                    item.doctor_notes = this.reviewModal.notes;
-                    item.reviewed_at = payload.reviewed_at ?? null;
-                }
-
-                this.reviewModal.open = false;
-            } catch (error) {
-                this.reviewModal.error = error.message || 'No se pudo guardar. Intenta de nuevo.';
-            } finally {
-                this.reviewModal.saving = false;
-            }
-        },
-
-        async removeReview() {
-            this.reviewModal.saving = true;
-            this.reviewModal.error = '';
-
-            try {
-                const resp = await fetch(`/clinico/diagnosticos/${this.reviewModal.id}/review`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': this.csrf,
-                        'Accept': 'application/json',
-                    },
-                });
-
-                const payload = await resp.json().catch(() => ({}));
-                if (!resp.ok) {
-                    throw new Error(payload.message || payload.error || 'No se pudo eliminar la valoracion.');
-                }
-
-                const item = this.findHistoryItem(this.reviewModal.id);
-                if (item) {
-                    item.doctor_result = null;
-                    item.doctor_label = null;
-                    item.doctor_notes = null;
-                    item.reviewed_at = null;
-                }
-
-                this.reviewModal.open = false;
-            } catch (error) {
-                this.reviewModal.error = error.message || 'No se pudo eliminar la valoracion.';
-            } finally {
-                this.reviewModal.saving = false;
-            }
-        },
-    };
-}
-</script>
 @endsection

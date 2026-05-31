@@ -15,7 +15,7 @@
 <div
     class="space-y-6"
     x-data="usersPage({
-        roles: {{ Js::from($rolesActivos->map(fn ($rol) => ['id' => $rol->role_id, 'nombre' => $rol->nombre])->values()) }},
+        roles: {{ Js::from($rolesActivos->map(fn ($rol) => ['id' => $rol->id, 'nombre' => $rol->name])->values()) }},
         tab: '{{ $filters['tab'] }}',
     })"
 >
@@ -79,7 +79,7 @@
                             <select name="role" class="input-field">
                                 <option value="">Todos</option>
                                 @foreach($roles as $rol)
-                                    <option value="{{ $rol->role_id }}" @selected((string) $filters['role'] === (string) $rol->role_id)>{{ $rol->nombre }}</option>
+                                    <option value="{{ $rol->id }}" @selected((string) $filters['role'] === (string) $rol->id)>{{ $rol->name }}</option>
                                 @endforeach
                             </select>
                         </label>
@@ -105,7 +105,6 @@
                                 <tr>
                                     <th>Usuario</th>
                                     <th>Rol</th>
-                                    <th>Analisis</th>
                                     <th>Estado</th>
                                     <th class="text-right">Acciones</th>
                                 </tr>
@@ -119,8 +118,7 @@
                                                 <span class="text-xs text-muted-foreground">{{ $usuario->email }}</span>
                                             </div>
                                         </td>
-                                        <td>{{ $usuario->rol?->nombre ?? 'Sin rol' }}</td>
-                                        <td><span class="font-mono text-sm">{{ number_format($usuario->analisis_ecg_count) }}</span></td>
+                                        <td>{{ $usuario->rolesa?->name ?? 'Sin rol' }}</td>
                                         <td>
                                             <span class="badge {{ $usuario->estado ? 'badge-success' : 'badge-warning' }}">
                                                 {{ $usuario->estado ? 'Activo' : 'Inactivo' }}
@@ -183,7 +181,7 @@
                         <span class="filter-label">Rol</span>
                         <select name="role_id" class="input-field" required>
                             @foreach($rolesActivos as $rol)
-                                <option value="{{ $rol->role_id }}" @selected((string) old('role_id') === (string) $rol->role_id)>{{ $rol->nombre }}</option>
+                                <option value="{{ $rol->id }}" @selected((string) old('role_id') === (string) $rol->id)>{{ $rol->name }}</option>
                             @endforeach
                         </select>
                     </label>
@@ -223,7 +221,7 @@
                                 <tr>
                                     <td>
                                         <div class="flex flex-col">
-                                            <span class="font-semibold">{{ $rol->nombre }}</span>
+                                            <span class="font-semibold">{{ $rol->name }}</span>
                                             <span class="text-xs text-muted-foreground">{{ $rol->descripcion ?: 'Sin descripcion' }}</span>
                                         </div>
                                     </td>
@@ -237,8 +235,8 @@
                                         <div class="flex justify-end">
                                             <button type="button"
                                                     @click="openRoleEdit({{ Js::from([
-                                                        'id' => $rol->role_id,
-                                                        'nombre' => $rol->nombre,
+                                                        'id' => $rol->id,
+                                                        'nombre' => $rol->name,
                                                         'descripcion' => $rol->descripcion,
                                                         'estado' => $rol->estado,
                                                         'action' => route('roles.update', $rol),
@@ -369,49 +367,4 @@
         </form>
     </div>
 </div>
-
-<script>
-function usersPage(config) {
-    return {
-        roles: config.roles ?? [],
-        tab: config.tab || 'usuarios',
-        userModal: {
-            open: false,
-            action: '',
-            name: '',
-            email: '',
-            role_id: '',
-            estado: true,
-        },
-        roleModal: {
-            open: false,
-            action: '',
-            nombre: '',
-            descripcion: '',
-            estado: true,
-        },
-
-        openUserEdit(user) {
-            this.userModal = {
-                open: true,
-                action: user.action,
-                name: user.name,
-                email: user.email,
-                role_id: String(user.role_id ?? ''),
-                estado: Boolean(user.estado),
-            };
-        },
-
-        openRoleEdit(role) {
-            this.roleModal = {
-                open: true,
-                action: role.action,
-                nombre: role.nombre,
-                descripcion: role.descripcion || '',
-                estado: Boolean(role.estado),
-            };
-        },
-    };
-}
-</script>
 @endsection

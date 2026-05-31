@@ -6,7 +6,7 @@ SAMPLING_RATE = 100
 DURATION = 5
 INPUT_SHAPE = (1000, 12)
 NUM_CLASSES = len(ARR_LABEL_CODES)
-MODEL_NAME = "modelo_arritmias_5seg.keras"
+MODEL_NAME = "modelo_arritmias_Fina_v4.keras"
 
 LABEL_CODE_TO_INDEX = {code: idx for idx, code in enumerate(ARR_LABEL_CODES)}
 LABEL_NAMES = ARR_LABEL_NAMES

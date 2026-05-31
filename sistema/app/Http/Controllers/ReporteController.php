@@ -34,14 +34,14 @@ class ReporteController extends Controller
             'analyses' => \App\Models\Imagen::count(),
         ];
 
-        return view('reportes', compact('patients', 'stats'));
+        return view('reportes.index', compact('patients', 'stats'));
     }
 
     public function download(Request $request)
     {
         $validated = $request->validate([
-            'mode' => ['required', 'in:all,selected'],
-            'patients' => ['nullable', 'array'],
+            'mode'       => ['required', 'in:all,selected'],
+            'patients'   => ['nullable', 'array'],
             'patients.*' => ['string'],
         ]);
 
@@ -50,22 +50,45 @@ class ReporteController extends Controller
             return back()->with('error', 'Selecciona al menos un paciente para generar el reporte.');
         }
 
-        $query = Imagen::query()
-            ->join('estudios', 'imagenes.estudio_id', '=', 'estudios.estudio_id')
-            ->join('pacientes', 'estudios.paciente_id', '=', 'pacientes.paciente_id')
-            ->select('imagenes.*', 'pacientes.codigo_generado as patient_identifier')
-            ->orderBy('pacientes.codigo_generado')
-            ->orderBy('imagenes.created_at');
+        // Traer imágenes con todas las relaciones necesarias
+        $query = Imagen::with([
+            'estudio.paciente',
+            'prediccion.ritmo',
+            'estudio.diagnostico.ritmoCardiaco',
+        ])->orderBy('created_at');
 
         if ($validated['mode'] === 'selected') {
-            $query->whereIn('pacientes.codigo_generado', $selectedPatients);
+            $query->whereHas('estudio.paciente', function ($q) use ($selectedPatients) {
+                $q->whereIn('codigo_generado', $selectedPatients);
+            });
         }
 
-        $rows = $query->get();
-        $filename = 'reporte_pacientes_' . now()->format('Ymd_His') . '.xlsx';
+        // Mapear a objetos simples que ExcelReportService pueda consumir
+        $rows = $query->get()->map(function ($img) {
+            $prediccion  = $img->prediccion;
+            $ritmo       = $prediccion?->ritmo;
+            $diagnostico = $img->estudio?->diagnostico;
+            $ritmoDoc    = $diagnostico?->ritmoCardiaco;
+            $prob        = $prediccion ? round($prediccion->probabilidad * 100, 1) : 0;
+            $isNormal    = ($ritmo?->label ?? '') === 'NORM';
+
+            return (object) [
+                'patient_identifier' => $img->estudio?->paciente?->codigo_generado ?? 'N/A',
+                'filename'           => $img->nombre_original ?? $img->ruta ?? 'N/A',
+                'created_at'         => $img->created_at,
+                'label'              => $ritmo?->nombre ?? 'N/A',
+                'confidence'         => $prob,
+                'type'               => $isNormal ? 'normal' : 'arritmia',
+                'doctor_result'      => $diagnostico ? ($ritmoDoc?->label === 'NORM' ? 'normal' : 'arritmia') : null,
+                'doctor_label'       => $diagnostico?->descripcion ?? '',
+                'doctor_notes'       => $diagnostico?->observacion ?? '',
+            ];
+        });
+
+        $filename = 'reporte_ecg_' . now()->format('Ymd_His') . '.xlsx';
 
         $service = new ExcelReportService();
-        $path = $service->buildExcelReport($rows);
+        $path    = $service->buildExcelReport($rows);
 
         ServicioAuditoria::registrar(
             'descargar',
@@ -75,10 +98,10 @@ class ReporteController extends Controller
             'Descarga de reporte de pacientes.',
             null,
             [
-                'mode' => $validated['mode'],
-                'patients' => $selectedPatients,
+                'mode'            => $validated['mode'],
+                'patients'        => $selectedPatients,
                 'total_registros' => $rows->count(),
-                'filename' => $filename,
+                'filename'        => $filename,
             ],
             $request
         );

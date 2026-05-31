@@ -24,7 +24,7 @@ class PacienteController extends Controller
 
         $pacientes->appends(['search' => $request->input('search')]);
 
-        return view('pacientes', compact('pacientes', 'prefijos'));
+        return view('pacientes.index', compact('pacientes', 'prefijos'));
     }
 
     public function store(Request $request)

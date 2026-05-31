@@ -59,7 +59,7 @@ class UserController extends Controller
             'roles'    => Role::count(),
         ];
 
-        return view('usuarios', compact('usuarios', 'roles', 'rolesActivos', 'filters', 'stats'));
+        return view('usuarios.index', compact('usuarios', 'roles', 'rolesActivos', 'filters', 'stats'));
     }
 
     public function store(Request $request)
@@ -79,7 +79,7 @@ class UserController extends Controller
             'estado'  => $request->estado ?? 1,
         ]);
 
-        return redirect()->route('usuario.index')->with([
+        return redirect()->route('usuarios.index')->with([
             'status'  => 'success',
             'message' => 'Usuario creado correctamente.',
             'data'    => $usuario->name
@@ -102,7 +102,7 @@ class UserController extends Controller
 
         $usuario->update($data);
 
-        return redirect()->route('usuario.index')->with([
+        return redirect()->route('usuarios.index')->with([
             'status'  => 'success',
             'message' => 'Usuario actualizado correctamente.',
             'data'    => $usuario->name
@@ -112,7 +112,7 @@ class UserController extends Controller
     public function destroy(User $usuario)
     {
         $usuario->update(['estado' => 0]);
-        return redirect()->route('usuario.index')->with([
+        return redirect()->route('usuarios.index')->with([
             'status'  => 'warning',
             'message' => 'Usuario desactivado.',
             'data'    => $usuario->name
@@ -122,7 +122,7 @@ class UserController extends Controller
     public function activar(User $usuario)
     {
         $usuario->update(['estado' => 1]);
-        return redirect()->route('usuario.index')->with([
+        return redirect()->route('usuarios.index')->with([
             'status'  => 'success',
             'message' => 'Usuario activado.',
             'data'    => $usuario->name
