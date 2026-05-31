@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Auditoria;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Throwable;
 
@@ -22,7 +23,7 @@ class ServicioAuditoria
     ): void {
         try {
             Auditoria::create([
-                'usuario_id' => $usuarioId ?? Session::get('user.id'),
+                'usuario_id' => $usuarioId ?? Auth::id() ?? Session::get('user.id'),
                 'accion' => $accion,
                 'modulo' => $modulo,
                 'entidad' => $entidad,
@@ -30,11 +31,13 @@ class ServicioAuditoria
                 'descripcion' => $descripcion,
                 'valores_anteriores' => self::limpiar($valoresAnteriores),
                 'valores_nuevos' => self::limpiar($valoresNuevos),
+                'ip_address' => $request?->ip(),
                 'user_agent' => $request?->userAgent(),
                 'created_at' => now(),
             ]);
-        } catch (Throwable) {
+        } catch (Throwable $e) {
             // La auditoria no debe bloquear la operacion principal.
+            // Puedes loguear el error si lo deseas: \Log::error($e->getMessage());
         }
     }
 

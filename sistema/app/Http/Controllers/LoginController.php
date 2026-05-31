@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use App\Services\ServicioAuditoria;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
+
+class LoginController extends Controller
+{
+    public function iniciarSesion(Request $request)
+    {
+        $request->validate([
+            'usuario' => 'required',
+            'password' => 'required'
+        ]);
+
+        $credentials = $request->only('usuario', 'password');
+
+        $user = User::where('usuario', $credentials['usuario'])->first();
+
+        if ($user && $user->estado != 1) {
+            return back()->withErrors([
+                'usuario' => 'Su cuenta está desactivada. Contacte al administrador.'
+            ]);
+        }
+
+        if (Auth::attempt($credentials)) {
+            ServicioAuditoria::registrar('login', 'Autenticacion', 'users', Auth::id(), 'Inicio de sesion exitoso.', null, ['email' => $user->email ?? $user->usuario], $request);
+            $request->session()->regenerate();
+            return redirect()->intended('/menu-principal');
+        }
+
+        return back()->withErrors([
+            'usuario' => 'Credenciales incorrectas.'
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        ServicioAuditoria::registrar('logout', 'Autenticacion', 'users', Auth::id(), 'Cierre de sesion.', null, null, $request);
+        Auth::logout();
+
+        // Invalida la sesión actual
+        $request->session()->invalidate();
+
+        // Regenera el token CSRF
+        $request->session()->regenerateToken();
+
+        // Redirige al inicio o login
+        return redirect()->route('inicio.login')->with([
+            'ok' => 'enabled',
+            'message' => 'Sesión cerrada correctamente',
+            'alert' => 'success'
+        ]);
+    }
+}

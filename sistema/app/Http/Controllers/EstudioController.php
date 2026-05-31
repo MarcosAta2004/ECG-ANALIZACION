@@ -1,0 +1,145 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Models\Estudio;
+use App\Models\Paciente;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class EstudioController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = \App\Models\Imagen::with(['estudio.paciente', 'diagnostico', 'predicciones.ritmo']);
+
+        // Filtros de búsqueda
+        $filters = [
+            'search' => $request->input('search', ''),
+            'filter' => $request->input('filter', 'all'),
+        ];
+
+        if ($filters['search']) {
+            $searchTerm = $filters['search'];
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('filename', 'like', "%{$searchTerm}%")
+                  ->orWhereHas('estudio.paciente', function($pq) use ($searchTerm) {
+                      $pq->where('codigo_generado', 'like', "%{$searchTerm}%");
+                  });
+            });
+        }
+
+        // Aplicar filtros de estado
+        if ($filters['filter'] === 'normal') {
+            $query->whereHas('predicciones.ritmo', function($q){ $q->where('label', 'NORM'); });
+        } elseif ($filters['filter'] === 'arritmia') {
+            $query->whereHas('predicciones.ritmo', function($q){ $q->where('label', '!=', 'NORM'); });
+        } elseif ($filters['filter'] === 'reviewed') {
+            $query->whereHas('diagnostico');
+        } elseif ($filters['filter'] === 'unreviewed') {
+            $query->whereDoesntHave('diagnostico');
+        }
+
+        $history = $query->orderBy('created_at', 'desc')->paginate(10);
+        
+        // Formatear items para Alpine.js
+        $history->getCollection()->transform(function($img) {
+            $prediccion = $img->predicciones->first();
+            $diagnostico = $img->diagnostico;
+            return [
+                'id' => $img->imagen_id,
+                'filename' => $img->nombre_original ?? $img->filename,
+                'patient' => $img->estudio->paciente->codigo_generado ?? 'N/A',
+                'date' => $img->created_at->format('d/m/Y'),
+                'time' => $img->created_at->format('H:i'),
+                'rhythm' => $prediccion->ritmo->nombre ?? 'N/A',
+                'probability' => $prediccion ? round($prediccion->probabilidad * 100, 1) : 0,
+                'result' => ($prediccion->ritmo->label ?? '') === 'NORM' ? 'normal' : 'arritmia',
+                'doctor_result' => $diagnostico ? (($diagnostico->resultado === 'Normal' || $diagnostico->resultado === 'normal') ? 'normal' : 'arritmia') : null,
+                'doctor_label' => $diagnostico->ritmo->nombre ?? null,
+                'doctor_notes' => $diagnostico->observacion ?? '',
+            ];
+        });
+
+        // Estadísticas para las tarjetas superiores
+        $stats = [
+            'total' => \App\Models\Imagen::count(),
+            'normales' => \App\Models\Prediccion::whereHas('ritmo', function($q){ $q->where('label', 'NORM'); })->count(),
+            'arritmias' => \App\Models\Prediccion::whereHas('ritmo', function($q){ $q->where('label', '!=', 'NORM'); })->count(),
+            'revisados' => \App\Models\Diagnostico::count(),
+        ];
+
+        $canReview = in_array(session('user.role'), ['Administrador', 'Medico'], true);
+
+        return view('estudios.index', compact('history', 'stats', 'filters', 'canReview'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'paciente_id'  => 'required|exists:pacientes,paciente_id',
+            'edad'         => 'nullable|integer|min:0|max:120',
+            'observaciones' => 'nullable',
+        ]);
+
+        $estudio = new Estudio();
+        $estudio->paciente_id    = $request->paciente_id;
+        $estudio->registrado_por = Auth::id();
+        $estudio->edad           = $request->edad ?? null;
+        $estudio->observaciones  = $request->observaciones ?? null;
+        $estudio->save();
+
+        return redirect()->route('estudios.index')->with([
+            'ok'      => 'enabled',
+            'message' => 'Se acaba de registrar correctamente el estudio del paciente',
+            'alert'   => 'success',
+            'data'    => $estudio->paciente->codigo_generado,
+        ]);
+    }
+
+    public function update(Request $request, Estudio $estudio)
+    {
+        $request->validate([
+            'edad'          => 'nullable|integer|min:0|max:120',
+            'observaciones' => 'nullable',
+        ]);
+
+        $estudio->edad          = $request->edad ?? null;
+        $estudio->observaciones = $request->observaciones ?? null;
+        $estudio->save();
+
+        return redirect()->route('estudios.index')->with([
+            'ok'      => 'enabled',
+            'message' => 'Se acaba de actualizar correctamente el estudio del paciente',
+            'alert'   => 'success',
+            'data'    => $estudio->paciente->codigo_generado,
+        ]);
+    }
+
+    public function destroy(Estudio $estudio)
+    {
+        $estudio->estado = 0;
+        $estudio->save();
+
+        return redirect()->route('estudios.index')->with([
+            'ok'      => 'enabled',
+            'message' => 'Se acaba de deshabilitar el estudio',
+            'alert'   => 'danger',
+            'data'    => $estudio->paciente->codigo_generado,
+        ]);
+    }
+
+    public function activar(Estudio $estudio)
+    {
+        $estudio->estado = 1;
+        $estudio->save();
+
+        return redirect()->route('estudios.index')->with([
+            'ok'      => 'enabled',
+            'message' => 'Se acaba de habilitar el estudio',
+            'alert'   => 'primary',
+            'data'    => $estudio->paciente->codigo_generado,
+        ]);
+    }
+}
