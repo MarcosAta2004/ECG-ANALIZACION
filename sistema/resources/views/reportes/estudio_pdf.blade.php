@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>ArrhythmiaAI - Reporte Clínico</title>
+    <title>ECG Analizacion - Reporte Clínico</title>
     <style>
         @page {
             margin: 80px 50px;
@@ -35,19 +35,17 @@
         body {
             font-family: 'Helvetica', sans-serif;
             font-size: 11px;
-            color: #333;
-            background-image: radial-gradient(#e5e5e5 0.5px, transparent 0.5px);
-            background-size: 20px 20px;
-            /* Simula papel milimetrado de ECG muy suave */
+            color: #1f2937;
+            background: #f8fafc;
         }
 
         .main-container {
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 10px;
+            background-color: #ffffff;
+            padding: 10px 12px 14px;
         }
 
         .logo-text {
-            font-size: 26px;
+            font-size: 24px;
             font-weight: bold;
             color: #003366;
             letter-spacing: -1px;
@@ -68,7 +66,7 @@
         .report-title h1 {
             margin: 0;
             font-size: 18px;
-            color: #444;
+            color: #111827;
         }
 
         .report-title p {
@@ -82,12 +80,13 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            border: 1px solid #ccc;
+            border: 1px solid #dbe4ee;
+            border-radius: 8px;
         }
 
         .info-grid td {
             padding: 10px;
-            border: 1px solid #eee;
+            border: 1px solid #dbe4ee;
         }
 
         .bg-navy {
@@ -99,7 +98,7 @@
 
         .section-header {
             margin-top: 25px;
-            padding: 5px 0;
+            padding: 6px 0;
             border-bottom: 2px solid #00aaff;
             font-weight: bold;
             color: #003366;
@@ -111,8 +110,8 @@
             padding: 15px;
             border-radius: 5px;
             background: white;
-            border: 1px solid #e0e0e0;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.05);
+            border: 1px solid #dbe4ee;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
         }
 
         .ai-border {
@@ -156,12 +155,12 @@
         .disclaimer {
             margin-top: 50px;
             font-size: 8px;
-            color: #888;
+            color: #64748b;
             text-align: justify;
             line-height: 1.2;
             padding: 10px;
-            background: #fdfdfd;
-            border: 1px solid #eee;
+            background: #f8fafc;
+            border: 1px solid #dbe4ee;
         }
     </style>
 </head>
@@ -169,8 +168,8 @@
 <body>
 
     <header>
-        <div class="logo-text">Arrhythmia<span>AI</span></div>
-        <div style="font-size: 8px; color: #666; margin-top: -5px;">INTELLIGENT CARDIAC ANALYSIS SYSTEM</div>
+        <div class="logo-text">ECG Analizacion</div>
+        <div style="font-size: 8px; color: #64748b; margin-top: -5px;">Sistema de analisis cardiaco inteligente</div>
         <div class="report-title">
             <h1>INFORME CLÍNICO</h1>
             <p>EXPEDIENTE: {{ $paciente['codigo_generado'] }}</p>
@@ -180,7 +179,7 @@
     <footer>
         <table style="width: 100%;">
             <tr>
-                <td style="text-align: left;">ArrhythmiaAI v1.0 - Análisis Confidencial</td>
+                <td style="text-align: left;">ECG Analizacion v1.0 - Análisis Confidencial</td>
                 <td style="text-align: right;">Generado electrónicamente el {{ date('d/m/Y H:i:s') }}</td>
             </tr>
         </table>
@@ -193,7 +192,7 @@
                 <td class="bg-navy">ID PACIENTE</td>
                 <td>{{ $paciente['codigo_generado'] }}</td>
                 <td class="bg-navy">SISTEMA</td>
-                <td>ArrhythmiaAI Cloud</td>
+                <td>ECG Analizacion Cloud</td>
             </tr>
             <tr>
                 <td class="bg-navy">EDAD / GÉNERO</td>
@@ -201,13 +200,20 @@
                 <td class="bg-navy">FECHA ESTUDIO</td>
                 <td>{{ $estudio['fecha'] }}</td>
             </tr>
+            <tr>
+                <td class="bg-navy">ID ESTUDIO</td>
+                <td>{{ $estudio['id'] }}</td>
+                <td class="bg-navy">ARCHIVO ORIGEN</td>
+                <td>{{ $estudio['archivo'] }}</td>
+            </tr>
         </table>
 
-        <div class="section-header">ANÁLISIS DE REDES NEURONALES (AI ENGINE)</div>
+        <div class="section-header">ANÁLISIS IA</div>
         <div class="result-card ai-border">
             <span class="status-pill pill-active">Procesado</span>
             <div style="font-size: 10px; color: #666;">HALLAZGO PREDICHO:</div>
             <div style="font-size: 16px; font-weight: bold; color: #003366; margin: 5px 0;">{{ $ia['resultado'] }}</div>
+            <div style="font-size: 10px; color: #666;">CODIGO IA: {{ $ia['codigo'] }}</div>
             <div style="margin-top: 10px;">
                 <span>Nivel de Confianza Predictiva: <strong>{{ $ia['probabilidad'] }}</strong></span>
                 <div class="prob-bar-container">
@@ -216,14 +222,14 @@
             </div>
         </div>
 
-        <div class="section-header">CONFIRMACIÓN MÉDICA ESPECIALIZADA</div>
+        <div class="section-header">CONFIRMACIÓN MÉDICA</div>
         <div class="result-card md-border">
             <table style="width: 100%;">
                 <tr>
                     <td>
                         <div style="font-size: 10px; color: #666;">DIAGNÓSTICO FINAL:</div>
-                        <div style="font-size: 14px; font-weight: bold; margin: 5px 0;">{{ $diagnostico['ritmo'] }}
-                        </div>
+                        <div style="font-size: 14px; font-weight: bold; margin: 5px 0;">{{ $diagnostico['ritmo'] }}</div>
+                        <div style="font-size: 10px; color: #666;">CÓDIGO MÉDICO: {{ $diagnostico['codigo'] }}</div>
                     </td>
                     <td style="text-align: right; vertical-align: top;">
                         <span class="status-pill pill-active"
@@ -242,7 +248,7 @@
 
         <div class="disclaimer">
             <strong>ADVERTENCIA TÉCNICA Y LEGAL:</strong> Este documento ha sido generado por el motor de análisis
-            <strong>ArrhythmiaAI</strong>.
+            <strong>ECG Analizacion</strong>.
             Este informe es una herramienta de apoyo a la decisión clínica y no debe utilizarse como único criterio para
             el diagnóstico o tratamiento.
             La clasificación algorítmica es una asistencia estadística para el médico. La responsabilidad de la

@@ -6,6 +6,7 @@ use App\Models\Diagnostico;
 use App\Models\Imagen;
 use App\Models\Paciente;
 use App\Models\Prediccion;
+use App\Models\Reporte;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -86,6 +87,19 @@ class MenuPrincipalController extends Controller
         ]);
 
         $filename = 'estadisticas_ecg_' . now()->format('Ymd_His') . '.pdf';
+
+        $filteredImages
+            ->pluck('estudio')
+            ->filter()
+            ->unique('estudio_id')
+            ->each(function ($estudio) use ($filename, $filters) {
+                $reporte = Reporte::firstOrNew(['estudio_id' => $estudio->estudio_id]);
+                $reporte->generado_por = auth()->id();
+                $reporte->resumen = $reporte->resumen ?: 'Reporte estadistico generado desde dashboard. Periodo: ' . $filters['label'];
+                $reporte->ruta_pdf = $filename;
+                $reporte->estado = 1;
+                $reporte->save();
+            });
 
         return response($pdf, 200, [
             'Content-Type'        => 'application/pdf',

@@ -63,8 +63,10 @@ class ReporteController extends Controller
             });
         }
 
+        $imagenes = $query->get();
+
         // Mapear a objetos simples que ExcelReportService pueda consumir
-        $rows = $query->get()->map(function ($img) {
+        $rows = $imagenes->map(function ($img) {
             $prediccion  = $img->prediccion;
             $ritmo       = $prediccion?->ritmo;
             $diagnostico = $img->estudio?->diagnostico;
@@ -80,7 +82,8 @@ class ReporteController extends Controller
                 'confidence'         => $prob,
                 'type'               => $isNormal ? 'normal' : 'arritmia',
                 'doctor_result'      => $diagnostico ? ($ritmoDoc?->label === 'NORM' ? 'normal' : 'arritmia') : null,
-                'doctor_label'       => $diagnostico?->descripcion ?? '',
+                'doctor_code'        => $ritmoDoc?->label ?? '',
+                'doctor_label'       => $ritmoDoc?->nombre ?? '',
                 'doctor_notes'       => $diagnostico?->observacion ?? '',
             ];
         });
@@ -89,6 +92,18 @@ class ReporteController extends Controller
 
         $service = new ExcelReportService();
         $path    = $service->buildExcelReport($rows);
+
+        $imagenes
+            ->pluck('estudio')
+            ->filter()
+            ->unique('estudio_id')
+            ->each(function (Estudio $estudio) use ($filename) {
+                $this->registrarReporteGenerado(
+                    $estudio,
+                    $filename,
+                    'Reporte consolidado generado desde el modulo de reportes.'
+                );
+            });
 
         ServicioAuditoria::registrar(
             'descargar',
@@ -183,25 +198,41 @@ class ReporteController extends Controller
         $paciente = $estudio->paciente;
         $diagnostico = $estudio->diagnostico;
         $ia = $estudio->imagen?->prediccion;
+        $ritmoIa = $ia?->ritmoCardiaco ?? $ia?->ritmo;
+        $ritmoMedico = $diagnostico?->ritmoCardiaco;
+        $concordancia = $ritmoIa && $ritmoMedico
+            ? mb_strtoupper(trim((string) $ritmoIa->label), 'UTF-8') === mb_strtoupper(trim((string) $ritmoMedico->label), 'UTF-8')
+            : ($diagnostico?->concordancia ?? false);
         
         // 2. Preparar datos para la vista
         $data = [
             'paciente' => [
                 'codigo_generado' => $paciente->codigo_generado ?? 'N/A',
-                'genero' => $paciente->genero ?? 'N/A',
-                'edad' => $paciente->fecha_nacimiento ? \Carbon\Carbon::parse($paciente->fecha_nacimiento)->age : 'N/A',
+                'genero' => strtoupper((string) ($paciente->sexo ?? 'N/A')),
+                'edad' => $estudio->edad ?? (
+                    $paciente->fecha_nacimiento
+                        ? \Carbon\Carbon::parse($paciente->fecha_nacimiento)->age
+                        : 'N/A'
+                ),
             ],
             'estudio' => [
                 'fecha' => $estudio->created_at->format('d/m/Y H:i'),
+                'id' => $estudio->estudio_id,
+                'archivo' => $estudio->imagen?->nombre_original
+                    ?? $estudio->imagen?->filename
+                    ?? $estudio->imagen?->ruta
+                    ?? 'N/A',
             ],
             'ia' => [
-                'resultado' => $ia->resultado ?? 'SIN PROCESAR',
-                'probabilidad' => isset($ia->probabilidad) ? number_format($ia->probabilidad, 2) . '%' : 'N/A',
+                'resultado' => $ritmoIa?->nombre ?? 'SIN PROCESAR',
+                'codigo' => $ritmoIa?->label ?? 'N/A',
+                'probabilidad' => isset($ia->probabilidad) ? number_format($ia->probabilidad * 100, 2) . '%' : 'N/A',
             ],
             'diagnostico' => [
-                'ritmo' => $diagnostico->ritmoCardiaco->nombre ?? 'PENDIENTE',
-                'concordancia' => $diagnostico->concordancia ?? false,
-                'observacion' => $diagnostico->observacion ?? 'Sin observaciones médicas.',
+                'ritmo' => $ritmoMedico?->nombre ?? 'PENDIENTE',
+                'codigo' => $ritmoMedico?->label ?? 'N/A',
+                'concordancia' => $concordancia,
+                'observacion' => $diagnostico?->observacion ?? 'Sin observaciones médicas.',
             ],
             'medico' => [
                 'nombre' => 'ESPECIALISTA EN TURNO', // Opcional: podrías jalar el nombre del usuario que creó el diagnóstico
@@ -209,11 +240,29 @@ class ReporteController extends Controller
             ]
         ];
 
-        $pdf = Pdf::loadView('reportes.estudio_pdf', $data);
-        
         // Nombre del archivo profesional
         $filename = 'REPORTE_' . ($paciente->codigo_generado ?? $id) . '_' . now()->format('dmY') . '.pdf';
+
+        $pdf = Pdf::loadView('reportes.estudio_pdf', $data);
+
+        $this->registrarReporteGenerado(
+            $estudio,
+            $filename,
+            'Reporte clinico generado desde historial.'
+        );
         
         return $pdf->download($filename);
+    }
+
+    private function registrarReporteGenerado(Estudio $estudio, string $filename, string $resumen): Reporte
+    {
+        $reporte = Reporte::firstOrNew(['estudio_id' => $estudio->estudio_id]);
+        $reporte->generado_por = Auth::id();
+        $reporte->resumen = $reporte->resumen ?: $resumen;
+        $reporte->ruta_pdf = $filename;
+        $reporte->estado = 1;
+        $reporte->save();
+
+        return $reporte;
     }
 }

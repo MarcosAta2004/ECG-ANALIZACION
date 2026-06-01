@@ -40,6 +40,7 @@ class ExcelReportService
             'Probabilidad',
             'Estado IA',
             'Valoracion medica',
+            'Codigo medico',
             'Diagnostico medico',
             'Notas medicas',
         ];
@@ -57,6 +58,7 @@ class ExcelReportService
                 $row->doctor_result
                     ? ($row->doctor_result === 'normal' ? 'Normal' : 'Arritmia')
                     : 'Sin valorar',
+                $row->doctor_code ?? '',
                 $row->doctor_label ?? '',
                 $row->doctor_notes ?? '',
             ];
