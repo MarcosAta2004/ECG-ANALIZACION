@@ -32,8 +32,8 @@ class User extends Authenticatable implements JWTSubject
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'usuario',
+        'login',
+        'email',
         'nombres',
         'apellido_paterno',
         'apellido_materno',
@@ -81,6 +81,8 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->belongsTo(Role::class, 'rol_id');
     }
+
+
 
     public function getJWTIdentifier()
     {

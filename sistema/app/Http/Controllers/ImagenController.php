@@ -164,6 +164,8 @@ class ImagenController extends Controller
 
             if (($validated['patient_mode'] ?? 'existing') === 'existing') {
                 $paciente = Paciente::where('estado', 1)->findOrFail($validated['patient_id']);
+                $paciente->peso = $validated['weight'];
+                $paciente->save();
             } else {
                 $prefijo = PrefijoPaciente::findOrFail($validated['prefijo_id']);
                 $anio = now()->year;
@@ -230,6 +232,7 @@ class ImagenController extends Controller
             return response()->json($payload);
         } catch (\Throwable $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Error en analyze: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
 
             return response()->json([
                 'error' => 'No se pudo registrar el paciente, estudio o imagen del ECG.',

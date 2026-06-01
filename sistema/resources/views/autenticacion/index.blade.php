@@ -57,7 +57,7 @@
 
                 {{-- Usuario --}}
                 <div class="mb-5 animate-fade-in-delay-2">
-                    <label for="usuario" class="block text-sm font-medium text-foreground mb-2">
+                    <label for="login" class="block text-sm font-medium text-foreground mb-2">
                         Usuario o Correo
                     </label>
                     <div class="input-with-icon">
@@ -69,14 +69,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
-                        <input id="usuario" name="usuario" type="text"
-                               value="{{ old('usuario') }}"
+                        <input id="login" name="login" type="text"
+                               value="{{ old('login') }}"
                                placeholder="Ej: admin o doctor@hospital.com"
                                class="input-field"
                                :disabled="loading"
                                autocomplete="username" />
                     </div>
-                    @error('usuario')
+                    @error('login')
                         <p class="mt-1 text-xs text-destructive">{{ $message }}</p>
                     @enderror
                 </div>

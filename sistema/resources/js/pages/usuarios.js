@@ -5,9 +5,13 @@ export function usersPage(config = {}) {
         userModal: {
             open: false,
             action: '',
-            name: '',
-            email: '',
-            role_id: '',
+            login: '',
+            nombres: '',
+            apellido_paterno: '',
+            apellido_materno: '',
+            tipo_documento_identidad_id: '',
+            numero_documento: '',
+            rol_id: '',
             estado: true,
         },
         roleModal: {
@@ -22,9 +26,13 @@ export function usersPage(config = {}) {
             this.userModal = {
                 open: true,
                 action: user.action,
-                name: user.name,
-                email: user.email,
-                role_id: String(user.role_id ?? ''),
+                login: user.login || '',
+                nombres: user.nombres || '',
+                apellido_paterno: user.apellido_paterno || '',
+                apellido_materno: user.apellido_materno || '',
+                tipo_documento_identidad_id: user.tipo_documento_identidad_id || '',
+                numero_documento: user.numero_documento || '',
+                rol_id: String(user.rol_id ?? ''),
                 estado: Boolean(user.estado),
             };
         },

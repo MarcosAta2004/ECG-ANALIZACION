@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Traits\Auditable;
+use App\Models\TipoDocumentoIdentidad;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -27,13 +26,14 @@ class UserController extends Controller
             'tab'    => $validated['tab']    ?? 'usuarios',
         ];
 
-        // Consulta de Usuarios con filtros
-        $query = User::query()->with('rolesa')->withCount('roles'); // Ajustado según tu esquema
+        $query = User::query()->with('rolesa')->withCount('roles');
 
         if ($filters['search']) {
-            $query->where(function($q) use ($filters) {
-                $q->where('name', 'like', '%' . $filters['search'] . '%')
-                  ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+            $query->where(function ($q) use ($filters) {
+                $q->where('login', 'like', '%' . $filters['search'] . '%')
+                  ->orWhere('nombres', 'like', '%' . $filters['search'] . '%')
+                  ->orWhere('apellido_paterno', 'like', '%' . $filters['search'] . '%')
+                  ->orWhere('numero_documento', 'like', '%' . $filters['search'] . '%');
             });
         }
 
@@ -47,11 +47,10 @@ class UserController extends Controller
 
         $usuarios = $query->orderBy('id', 'desc')->paginate(10)->withQueryString();
 
-        // Datos para Roles
-        $roles = Role::withCount('users')->get();
-        $rolesActivos = Role::all(); // O filtrar por estado si tienes esa columna
+        $roles       = Role::withCount('users')->get();
+        $rolesActivos = Role::all();
+        $tiposDoc    = TipoDocumentoIdentidad::all();
 
-        // Estadísticas para el dashboard superior de la vista
         $stats = [
             'usuarios' => User::count(),
             'activos'  => User::where('estado', 1)->count(),
@@ -59,53 +58,120 @@ class UserController extends Controller
             'roles'    => Role::count(),
         ];
 
-        return view('usuarios.index', compact('usuarios', 'roles', 'rolesActivos', 'filters', 'stats'));
+        return view('usuarios.index', compact('usuarios', 'roles', 'rolesActivos', 'tiposDoc', 'filters', 'stats'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'name'     => 'required|max:100',
-            'email'    => 'required|email|unique:users,email',
-            'role_id'  => 'required|exists:roles,id',
-            'password' => 'required|min:6|confirmed',
+            'login'                       => 'required|string|max:100|unique:users,login',
+            'nombres'                     => 'required|string|max:100',
+            'apellido_paterno'            => 'nullable|string|max:100',
+            'apellido_materno'            => 'nullable|string|max:100',
+            'tipo_documento_identidad_id' => 'nullable|exists:tipo_documento_identidades,id',
+            'numero_documento'            => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->tipo_documento_identidad_id) {
+                        $tipo = TipoDocumentoIdentidad::find($request->tipo_documento_identidad_id);
+                        if ($tipo) {
+                            $len = strlen($value);
+                            if ($tipo->minimo && $len < $tipo->minimo) {
+                                $fail("El número de documento debe tener al menos {$tipo->minimo} caracteres.");
+                            }
+                            if ($tipo->maximo && $len > $tipo->maximo) {
+                                $fail("El número de documento no debe exceder los {$tipo->maximo} caracteres.");
+                            }
+                        }
+                    }
+                },
+            ],
+            'rol_id'                      => 'required|exists:roles,id',
+            'password'                    => 'required|min:6',
         ]);
 
         $usuario = User::create([
-            'name'    => $request->name,
-            'email'   => $request->email,
-            'password'=> $request->password,
-            'rol_id'  => $request->role_id,
-            'estado'  => $request->estado ?? 1,
+            'login'                       => $request->login,
+            'nombres'                     => $request->nombres,
+            'apellido_paterno'            => $request->apellido_paterno,
+            'apellido_materno'            => $request->apellido_materno,
+            'tipo_documento_identidad_id' => $request->tipo_documento_identidad_id,
+            'numero_documento'            => $request->numero_documento,
+            'rol_id'                      => $request->rol_id,
+            'password'                    => $request->password,
+            'estado'                      => $request->has('estado') ? 1 : 0,
         ]);
+
+        $rol = Role::find($request->rol_id);
+        if ($rol) {
+            $usuario->assignRole($rol->name);
+        }
 
         return redirect()->route('usuarios.index')->with([
             'status'  => 'success',
             'message' => 'Usuario creado correctamente.',
-            'data'    => $usuario->name
+            'data'    => $usuario->login,
         ]);
     }
 
     public function update(Request $request, User $usuario)
     {
         $request->validate([
-            'name'    => 'required|max:100',
-            'email'   => 'required|email|unique:users,email,' . $usuario->id,
-            'role_id' => 'required|exists:roles,id',
+            'login'                       => 'required|string|max:100|unique:users,login,' . $usuario->id,
+            'nombres'                     => 'required|string|max:100',
+            'apellido_paterno'            => 'nullable|string|max:100',
+            'apellido_materno'            => 'nullable|string|max:100',
+            'tipo_documento_identidad_id' => 'nullable|exists:tipo_documento_identidades,id',
+            'numero_documento'            => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->tipo_documento_identidad_id) {
+                        $tipo = TipoDocumentoIdentidad::find($request->tipo_documento_identidad_id);
+                        if ($tipo) {
+                            $len = strlen($value);
+                            if ($tipo->minimo && $len < $tipo->minimo) {
+                                $fail("El número de documento debe tener al menos {$tipo->minimo} caracteres.");
+                            }
+                            if ($tipo->maximo && $len > $tipo->maximo) {
+                                $fail("El número de documento no debe exceder los {$tipo->maximo} caracteres.");
+                            }
+                        }
+                    }
+                },
+            ],
+            'rol_id'                      => 'required|exists:roles,id',
         ]);
 
-        $data = $request->only(['name', 'email', 'role_id', 'estado']);
+        $data = [
+            'login'                       => $request->login,
+            'nombres'                     => $request->nombres,
+            'apellido_paterno'            => $request->apellido_paterno,
+            'apellido_materno'            => $request->apellido_materno,
+            'tipo_documento_identidad_id' => $request->tipo_documento_identidad_id,
+            'numero_documento'            => $request->numero_documento,
+            'rol_id'                      => $request->rol_id,
+            'estado'                      => $request->has('estado') ? 1 : 0,
+        ];
+
         if ($request->filled('password')) {
-            $request->validate(['password' => 'min:6|confirmed']);
+            $request->validate(['password' => 'min:6']);
             $data['password'] = $request->password;
         }
 
         $usuario->update($data);
 
+        // Sincronizar rol Spatie
+        $rol = Role::find($request->rol_id);
+        if ($rol) {
+            $usuario->syncRoles([$rol->name]);
+        }
+
         return redirect()->route('usuarios.index')->with([
             'status'  => 'success',
             'message' => 'Usuario actualizado correctamente.',
-            'data'    => $usuario->name
+            'data'    => $usuario->login,
         ]);
     }
 
@@ -115,7 +181,7 @@ class UserController extends Controller
         return redirect()->route('usuarios.index')->with([
             'status'  => 'warning',
             'message' => 'Usuario desactivado.',
-            'data'    => $usuario->name
+            'data'    => $usuario->login,
         ]);
     }
 
@@ -125,7 +191,7 @@ class UserController extends Controller
         return redirect()->route('usuarios.index')->with([
             'status'  => 'success',
             'message' => 'Usuario activado.',
-            'data'    => $usuario->name
+            'data'    => $usuario->login,
         ]);
     }
 }

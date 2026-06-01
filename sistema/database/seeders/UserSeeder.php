@@ -20,9 +20,8 @@ class UserSeeder extends Seeder
 
         // 1. Administrador (ID 1)
         $admin = User::updateOrCreate(
-            ['usuario' => 'admin'],
+            ['login' => 'admin'],
             [
-                'name' => 'admin',
                 'password' => '12345678',
                 'nombres' => 'P',
                 'apellido_paterno' => 'P',
@@ -37,15 +36,14 @@ class UserSeeder extends Seeder
 
         // 2. Cardiólogo (ID 2/3)
         $cardiologo = User::updateOrCreate(
-            ['usuario' => 'cardiologo'],
+            ['login' => 'cardiologo'],
             [
-                'name' => 'Dr. Ronald',
                 'password' => '987654321',
                 'nombres' => 'Ronald',
                 'apellido_paterno' => 'May',
                 'apellido_materno' => 'Apasestegui',
                 'tipo_documento_identidad_id' => 1,
-                'rol_id' => $rolCardio, 
+                'rol_id' => $rolCardio,
                 'numero_documento' => 76122785,
                 'estado' => 1,
             ]
@@ -54,9 +52,8 @@ class UserSeeder extends Seeder
 
         // 3. Licenciado (ID 3/4)
         $licenciado = User::updateOrCreate(
-            ['usuario' => 'licenciado'],
+            ['login' => 'licenciado'],
             [
-                'name' => 'Lic. Fermin',
                 'password' => '123456',
                 'nombres' => 'Fermin',
                 'apellido_paterno' => '',

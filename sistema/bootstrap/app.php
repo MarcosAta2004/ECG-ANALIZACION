@@ -15,7 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             '*',
         ]);
-        $middleware->redirectGuestsTo(fn () => response()->json(['message' => 'Unauthorized. Please login.', 'status' => 401], 401));
+        $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->alias([
             'rol' => MiddlewareRol::class,
         ]);

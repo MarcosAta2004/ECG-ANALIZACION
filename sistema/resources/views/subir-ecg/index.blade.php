@@ -135,12 +135,12 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-muted-foreground mb-1">Edad (años)</label>
-                    <input type="number" x-model.number="patientAge" min="0" max="120" step="1" class="input-field" placeholder="Ej: 45" />
+                    <label class="block text-sm font-medium text-muted-foreground mb-1">Fecha de Nacimiento</label>
+                    <input type="date" x-model="newPatientBirthDate" class="input-field" :disabled="patientMode === 'existing'" />
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-muted-foreground mb-1">Sexo</label>
-                    <select x-model.number="patientSex" class="input-field">
+                    <select x-model.number="patientSex" class="input-field" :disabled="patientMode === 'existing'">
                         <option value="">Seleccionar</option>
                         <option value="0">Femenino</option>
                         <option value="1">Masculino</option>

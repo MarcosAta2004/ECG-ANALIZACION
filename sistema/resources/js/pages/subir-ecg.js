@@ -144,18 +144,19 @@ export function ecgUpload(config = {}) {
             }
 
             this.selectedPatientLabel = `${patient.codigo_generado}${patient.edad ? ` · ${patient.edad} años` : ''}`;
-            this.patientAge = patient.edad ?? '';
+            this.newPatientBirthDate = patient.fecha_nacimiento ? patient.fecha_nacimiento.split('T')[0] : '';
             this.patientSex = patient.sexo === 'M' ? 1 : patient.sexo === 'F' ? 0 : '';
             this.patientWeight = patient.peso ?? '';
         },
 
         validateMeta() {
-            if (this.patientAge === '' || this.patientAge === null) {
-                this.metaError = 'Ingresa la edad del paciente.';
+            if (this.newPatientBirthDate === '' || this.newPatientBirthDate === null) {
+                this.metaError = 'Ingresa la fecha de nacimiento del paciente.';
                 return false;
             }
-            if (this.patientAge < 0 || this.patientAge > 120) {
-                this.metaError = 'La edad es invalida. Debe estar entre 0 y 120 anos.';
+            const birthDate = new Date(this.newPatientBirthDate);
+            if (birthDate >= new Date()) {
+                this.metaError = 'La fecha de nacimiento no puede ser futura.';
                 return false;
             }
             if (this.patientSex === '' || this.patientSex === null) {
@@ -207,9 +208,10 @@ export function ecgUpload(config = {}) {
         },
 
         async analyzeImageOrPdf() {
+            const calculatedAge = this.getCalculatedAge();
             const form = new FormData();
             form.append('file', this.file);
-            form.append('age', String(this.patientAge));
+            form.append('age', String(calculatedAge));
             form.append('sex', String(this.patientSex));
             form.append('weight', String(this.patientWeight));
             form.append('patient_mode', this.patientMode);
@@ -242,9 +244,11 @@ export function ecgUpload(config = {}) {
             const signal = await this.parseCSVFile(this.file);
             const csv = this.signalToCsv(signal);
             const blob = new Blob([csv], { type: 'text/csv' });
+            
+            const calculatedAge = this.getCalculatedAge();
             const form = new FormData();
             form.append('file', blob, this.file.name);
-            form.append('age', String(this.patientAge));
+            form.append('age', String(calculatedAge));
             form.append('sex', String(this.patientSex));
             form.append('weight', String(this.patientWeight));
             form.append('patient_mode', this.patientMode);
@@ -280,6 +284,18 @@ export function ecgUpload(config = {}) {
             } catch {}
 
             return detail;
+        },
+
+        getCalculatedAge() {
+            if (!this.newPatientBirthDate) return 0;
+            const birthDate = new Date(this.newPatientBirthDate);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return age;
         },
 
         setResult(data, signalOverride = null) {
@@ -455,7 +471,7 @@ export function ecgUpload(config = {}) {
                 '===========================',
                 `Archivo:  ${this.file?.name ?? 'N/A'}`,
                 `Fecha:    ${new Date().toLocaleString('es-PE')}`,
-                `Paciente: Edad ${this.patientAge} anos | Sexo ${this.patientSex == 1 ? 'Masculino' : 'Femenino'} | Peso ${this.patientWeight} kg`,
+                `Paciente: Edad ${this.getCalculatedAge()} anos | Sexo ${this.patientSex == 1 ? 'Masculino' : 'Femenino'} | Peso ${this.patientWeight} kg`,
                 '',
                 `Resultado:    ${this.result.type === 'normal' ? 'NORMAL' : 'ARRITMIA'}`,
                 `Diagnostico:  ${this.result.rhythm}`,

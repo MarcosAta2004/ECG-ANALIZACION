@@ -11,7 +11,7 @@ class DiagnosticoSeeder extends Seeder
     public function run(): void
     {
         // Buscar el ID del Dr. Ronald dinámicamente
-        $medicoId = User::where('usuario', 'cardiologo')->first()?->id ?? 2;
+        $medicoId = User::where('login', 'cardiologo')->first()?->id ?? 2;
 
         $data = [
             ['diagnostico_id' => 1, 'estudio_id' => 1, 'ritmo_id' => 6, 'medico_id' => $medicoId, 'concordancia' => true, 'descripcion' => 'Fibrilacion Auricular', 'observacion' => '', 'fecha_revision' => '2026-04-06 08:10:00', 'estado' => 1, 'created_at' => '2026-04-06 08:10:00', 'updated_at' => '2026-04-06 08:10:00'],

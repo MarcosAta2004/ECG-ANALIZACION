@@ -11,6 +11,11 @@ class Paciente extends Model
     protected $table      = 'pacientes';
     protected $primaryKey = 'paciente_id';
 
+    protected $casts = [
+        'fecha_nacimiento' => 'date:Y-m-d',
+        'peso' => 'float',
+    ];
+
     // Pertenece a un prefijo de código anónimo
     public function prefijoPaciente()
     {

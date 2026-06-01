@@ -12,58 +12,52 @@ class LoginController extends Controller
 {
     public function iniciarSesion(Request $request)
     {
-        // Soporte flexible para 'usuario' o 'name' para pruebas rápidas
-        $loginField = $request->has('usuario') ? 'usuario' : ($request->has('name') ? 'name' : 'usuario');
-
         $request->validate([
-            $loginField => 'required',
-            'password' => 'required'
+            'login'    => 'required|string',
+            'password' => 'required|string',
         ]);
 
-        $credentials = [
-            'usuario' => $request->input($loginField),
-            'password' => $request->input('password')
-        ];
+        $loginValue = $request->input('login');
 
-        $user = User::where('usuario', $credentials['usuario'])
-                    ->orWhere('name', $credentials['usuario'])
+        // Buscar usuario por campo 'login' o por 'email'
+        $user = User::where('login', $loginValue)
+                    ->orWhere('email', $loginValue)
                     ->first();
 
-        if ($user && $user->estado != 1) {
-            return response()->json([
-                'error' => 'Cuenta desactivada',
-                'message' => 'Su cuenta está desactivada. Contacte al administrador.'
-            ], 403);
+        if (!$user) {
+            return redirect()->back()
+                ->withInput($request->only('login'))
+                ->with('error', 'El usuario o contraseña no coinciden.');
         }
+
+        if ($user->estado != 1) {
+            return redirect()->back()
+                ->withInput($request->only('login'))
+                ->with('error', 'Su cuenta está desactivada. Contacte al administrador.');
+        }
+
+        $credentials = [
+            'login'    => $loginValue,
+            'password' => $request->input('password'),
+        ];
 
         if (Auth::attempt($credentials)) {
             $authenticatedUser = Auth::user();
             $request->session()->put('user', [
-                'id' => $authenticatedUser?->id,
-                'email' => $authenticatedUser?->email,
-                'name' => $authenticatedUser?->name,
+                'id'      => $authenticatedUser?->id,
+                'login'   => $authenticatedUser?->login,
                 'role_id' => $authenticatedUser?->rol_id,
-                'role' => $authenticatedUser?->rolesa?->name ?? '',
+                'role'    => $authenticatedUser?->rolesa?->name ?? '',
             ]);
-            ServicioAuditoria::registrar('login', 'Autenticacion', 'users', Auth::id(), 'Inicio de sesion exitoso.', null, ['email' => $user->email ?? $user->usuario], $request);
+            ServicioAuditoria::registrar('login', 'Autenticacion', 'users', Auth::id(), 'Inicio de sesion exitoso.', null, ['login' => $user->login], $request);
             $request->session()->regenerate();
-            
-            return response()->json([
-                'message' => 'Login exitoso',
-                'user' => [
-                    'id' => $user->id,
-                    'usuario' => $user->usuario,
-                    'name' => $user->name,
-                    'role' => $authenticatedUser?->rolesa?->name ?? '',
-                ],
-                'redirect_hint' => '/dashboard'
-            ]);
+
+            return redirect()->intended(route('dashboard'));
         }
 
-        return response()->json([
-            'error' => 'Credenciales incorrectas',
-            'message' => 'El usuario o contraseña no coinciden.'
-        ], 401);
+        return redirect()->back()
+            ->withInput($request->only('login'))
+            ->with('error', 'El usuario o contraseña no coinciden.');
     }
 
     public function logout(Request $request)
