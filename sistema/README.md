@@ -1,3 +1,5 @@
+npm install
+
 composer install
 
 
