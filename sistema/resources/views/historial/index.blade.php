@@ -93,17 +93,17 @@
                         <tr>
                             <td>
                                 <a
-                                    :href="item.ecg_url"
+                                    :href="item.report_url"
                                     target="_blank"
                                     rel="noopener"
                                     class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
-                                    :title="'Ver ECG de ' + item.filename"
+                                    :title="'Generar reporte de ' + item.filename"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0A9 9 0 1112 3a9 9 0 019 9z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                     </svg>
                                     <div class="flex flex-col items-start leading-tight">
-                                        <span class="font-medium text-sm">Ver ECG</span>
+                                        <span class="font-medium text-sm">Reporte</span>
                                         <span class="text-xs text-muted-foreground" x-text="item.filename"></span>
                                     </div>
                                 </a>

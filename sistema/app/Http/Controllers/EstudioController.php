@@ -53,6 +53,7 @@ class EstudioController extends Controller
             return [
                 'id' => $img->imagen_id,
                 'study_id' => $img->estudio_id,
+                'report_url' => route('reportes.estudio.pdf', ['id' => $img->estudio_id]),
                 'ecg_url' => route('imagenes.ecg.ver', ['imagen' => $img->imagen_id]),
                 'ecg_download_url' => route('imagenes.ecg.download', ['imagen' => $img->imagen_id]),
                 'filename' => basename($img->ruta),
