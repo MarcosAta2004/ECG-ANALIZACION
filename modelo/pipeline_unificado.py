@@ -56,7 +56,7 @@ def detectar_region_ecg(img):
     _, binaria = cv2.threshold(gris, 200, 255, cv2.THRESH_BINARY_INV)
     
     proyeccion_h = np.sum(binaria, axis=1)
-    proyeccion_v = np.sum(binaria, axis=0)  
+    proyeccion_v = np.sum(binaria, axis=0)
     
     umbral_h = np.max(proyeccion_h) * 0.05
     umbral_v = np.max(proyeccion_v) * 0.05
@@ -954,7 +954,7 @@ def digitalizar_todas_derivaciones(img, rois):
 # ==================== PASO 5: PREPARAR PARA EL MODELO ====================
 
 def preparar_para_modelo(derivaciones_mv):
-    """Prepara las señales para el modelo (1000 muestras, 12 leads)"""
+    """Prepara las señales para el modelo (500 muestras, 12 leads)"""
     print("\n[6/7] Preparando datos para el modelo...")
     
     signals = []
@@ -968,9 +968,9 @@ def preparar_para_modelo(derivaciones_mv):
         if len(values) < 10:
             raise ValueError(f"Derivación {lead} tiene muy pocos datos")
         
-        # Resamplear a 1000 puntos
+        # Resamplear a la longitud esperada por el modelo V2
         x_old = np.linspace(0, 1, len(values))
-        x_new = np.linspace(0, 1, 1000)
+        x_new = np.linspace(0, 1, config.INPUT_SHAPE[0])
         resampled = np.interp(x_new, x_old, values)
         
         # Normalizar si está activado
@@ -980,11 +980,11 @@ def preparar_para_modelo(derivaciones_mv):
             normed = resampled
         
         signals.append(normed)
-        print(f"   ✓ {lead}: {len(values)} → 1000 muestras")
+        print(f"   ✓ {lead}: {len(values)} → {config.INPUT_SHAPE[0]} muestras")
     
-    # Construir tensor (1, 1000, 12)
+    # Construir tensor (1, 500, 12)
     arr = np.stack(signals, axis=1)
-    tensor = arr.reshape(1, 1000, arr.shape[1])
+    tensor = arr.reshape(1, config.INPUT_SHAPE[0], arr.shape[1])
     
     print(f"   ✓ Tensor creado: {tensor.shape}")
     return tensor, signals
@@ -1101,10 +1101,10 @@ def _cargar_modelo():
     if not _os.path.exists(MODELO_PATH):
         raise FileNotFoundError(
             f"No existe el modelo '{MODELO_PATH}'. "
-            "Copia modelo_arritmias_Fina_v4.keras dentro de la carpeta modelo."
+            "Verifica que el archivo modelo_arritmias_Fina_v4.keras exista en la carpeta modelo del proyecto."
         )
 
-    model = construir_modelo()
+    model = construir_modelo(input_shape=config.INPUT_SHAPE)
 
     with zipfile.ZipFile(MODELO_PATH, 'r') as zf:
         with tempfile.NamedTemporaryFile(suffix='.h5', delete=False) as tmp:

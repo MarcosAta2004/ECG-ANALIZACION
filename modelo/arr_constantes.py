@@ -1,5 +1,5 @@
 # 01_arr_constantes.py - clases activas del modelo de inferencia ECG-only.
-# El orden debe coincidir exactamente con las salidas de modelo_arritmias_Fina_v4.keras.
+# El orden debe coincidir exactamente con las salidas de modelo_arritmias_5seg_V2.keras.
 
 TRAINABLE_RHYTHM_CODES = [
     "AFIB",

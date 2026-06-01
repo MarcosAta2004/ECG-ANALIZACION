@@ -55,8 +55,6 @@ app.add_middleware(
 
 def _cargar_imagen_desde_bytes(data: bytes, filename: str) -> np.ndarray:
     """Carga una imagen PNG/JPG desde bytes y la devuelve como array BGR."""
-    if not data:
-        raise ValueError(f"El archivo '{filename}' está vacío")
     arr = np.frombuffer(data, dtype=np.uint8)
     img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
     if img is None:
@@ -90,9 +88,9 @@ def _ejecutar_pipeline_imagen(img: np.ndarray, age: float, sex: int, weight: flo
     lead_ii = signals[1] if len(signals) > 1 else signals[0]
     beats, hr, variability, amplitude = detect_metrics(lead_ii)
 
-    # Construir señales para el gráfico (12 canales, 1000 muestras completas)
+    # Construir señales para el gráfico (12 canales, muestras del modelo V2)
     chart_signals = [
-        [float(v) for v in s[:1000].tolist()] for s in signals
+        [float(v) for v in s[:config.INPUT_SHAPE[0]].tolist()] for s in signals
     ]
 
     # Top-5 predicciones
@@ -193,7 +191,7 @@ async def predict(
             img = detectar_region_ecg(img)
 
         elif ext in (".csv", ".txt"):
-            # CSV: columnas = derivaciones (12), filas = muestras (>=1000)
+            # CSV: columnas = derivaciones (12), filas = muestras (>=500)
             # El frontend ya envía el CSV en el formato correcto
             import io
             content = data.decode("utf-8", errors="replace")
@@ -225,7 +223,7 @@ async def predict(
 
             lead_ii = signals[1] if len(signals) > 1 else signals[0]
             beats, hr, variability, amplitude = detect_metrics(lead_ii)
-            chart_signals = [[float(v) for v in s[:500].tolist()] for s in signals]
+            chart_signals = [[float(v) for v in s[:config.INPUT_SHAPE[0]].tolist()] for s in signals]
             top_idx = np.argsort(probs)[::-1][:5]
             top_predictions = [
                 {

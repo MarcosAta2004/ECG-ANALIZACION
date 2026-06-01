@@ -27,10 +27,13 @@ def focal_loss(gamma=2.0, alpha=0.25):
     return loss_fn
 
 
-def construir_modelo():
+def construir_modelo(input_shape=None):
     print(">>> Construyendo arquitectura CNN-LSTM ECG-only...")
 
-    ecg_input = Input(shape=config.INPUT_SHAPE, name="ecg_input")
+    if input_shape is None:
+        input_shape = config.INPUT_SHAPE
+
+    ecg_input = Input(shape=input_shape, name="ecg_input")
 
     x = Conv1D(64, 5, activation="relu")(ecg_input)
     x = BatchNormalization()(x)
