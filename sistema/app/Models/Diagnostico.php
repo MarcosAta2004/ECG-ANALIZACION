@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\Auditable;
 
 class Diagnostico extends Model
 {
-    use Auditable;
+    use Auditable, HasFactory;
     protected $table      = 'diagnosticos';
     protected $primaryKey = 'diagnostico_id';
 

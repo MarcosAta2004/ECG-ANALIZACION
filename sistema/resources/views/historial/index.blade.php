@@ -62,8 +62,6 @@
                 <span class="filter-label">Filtro</span>
                 <select name="filter" class="input-field">
                     <option value="all" @selected($filters['filter'] === 'all')>Todos</option>
-                    <option value="normal" @selected($filters['filter'] === 'normal')>Solo normales</option>
-                    <option value="arritmia" @selected($filters['filter'] === 'arritmia')>Solo arritmias</option>
                     <option value="reviewed" @selected($filters['filter'] === 'reviewed')>Con valoracion</option>
                     <option value="unreviewed" @selected($filters['filter'] === 'unreviewed')>Sin valoracion</option>
                 </select>

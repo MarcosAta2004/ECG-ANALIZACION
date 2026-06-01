@@ -24,19 +24,19 @@ class EstudioController extends Controller
         if ($filters['search']) {
             $searchTerm = $filters['search'];
             $query->where(function($q) use ($searchTerm) {
-                $q->where('filename', 'like', "%{$searchTerm}%")
+                $q->where('ruta', 'like', "%{$searchTerm}%")
                   ->orWhereHas('estudio.paciente', function($pq) use ($searchTerm) {
                       $pq->where('codigo_generado', 'like', "%{$searchTerm}%");
+                  })
+                  ->orWhereHas('prediccion.ritmo', function($pq) use ($searchTerm) {
+                      $pq->where('nombre', 'like', "%{$searchTerm}%")
+                         ->orWhere('label', 'like', "%{$searchTerm}%");
                   });
             });
         }
 
         // Aplicar filtros de estado
-        if ($filters['filter'] === 'normal') {
-            $query->whereHas('prediccion.ritmo', function($q){ $q->where('label', 'NORM'); });
-        } elseif ($filters['filter'] === 'arritmia') {
-            $query->whereHas('prediccion.ritmo', function($q){ $q->where('label', '!=', 'NORM'); });
-        } elseif ($filters['filter'] === 'reviewed') {
+        if ($filters['filter'] === 'reviewed') {
             $query->whereHas('estudio.diagnostico');
         } elseif ($filters['filter'] === 'unreviewed') {
             $query->whereDoesntHave('estudio.diagnostico');
@@ -54,7 +54,7 @@ class EstudioController extends Controller
                 'id' => $img->imagen_id,
                 'study_id' => $img->estudio_id,
                 'report_url' => route('reportes.estudio.pdf', ['id' => $img->estudio_id]),
-                'filename' => $img->nombre_original ?? $img->filename,
+                'filename' => basename($img->ruta),
                 'patient' => $img->estudio->paciente->codigo_generado ?? 'N/A',
                 'date' => $img->created_at->format('d/m/Y'),
                 'time' => $img->created_at->format('H:i'),

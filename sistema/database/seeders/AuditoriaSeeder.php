@@ -3,155 +3,123 @@
 namespace Database\Seeders;
 
 use App\Models\Auditoria;
+use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class AuditoriaSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Seeder para auditoría de validaciones médicas
+     * 
+     * DESCRIPCIÓN:
+     * - Carga 63 registros de auditoría simulando valoraciones del cardiólogo
+     * - Representa las validaciones y diagnósticos en el historial médico
+     * - Es como "logs" de lo que el especialista validó en el sistema
+     * 
+     * CAMPOS PRINCIPALES (Lo esencial):
+     * ✅ usuario_id        → ID del cardiólogo (usuario_id = 2)
+     * ✅ accion            → VALIDACION_DIAGNOSTICO
+     * ✅ modulo            → Clinico
+     * ✅ created_at        → Fecha de la valoración
      */
     public function run(): void
     {
+        // Obtener el cardiólogo del seeder de usuarios
+        $cardiologo = User::where('login', 'cardiologo')->first();
+        $cardiologoId = $cardiologo?->id ?? 2;
+
         $auditorias = [
-            [
-                'auditoria_id' => 1,
-                'usuario_id' => 1,
-                'accion' => 'logout',
-                'modulo' => 'Autenticacion',
-                'entidad' => 'users',
-                'entidad_id' => '1',
-                'descripcion' => 'Cierre de sesion.',
-                'valores_anteriores' => null,
-                'valores_nuevos' => '{"email": "admin@ecg.com"}',
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
-                'created_at' => '2026-05-21 14:06:23',
-                'updated_at' => '2026-05-21 14:06:23',
-            ],
-            [
-                'auditoria_id' => 2,
-                'usuario_id' => 2,
-                'accion' => 'login',
-                'modulo' => 'Autenticacion',
-                'entidad' => 'users',
-                'entidad_id' => '2',
-                'descripcion' => 'Inicio de sesion exitoso.',
-                'valores_anteriores' => null,
-                'valores_nuevos' => '{"rol": "Medico", "email": "jose@ecg.com"}',
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
-                'created_at' => '2026-05-21 14:06:31',
-                'updated_at' => '2026-05-21 14:06:31',
-            ],
-            [
-                'auditoria_id' => 3,
-                'usuario_id' => 2,
-                'accion' => 'logout',
-                'modulo' => 'Autenticacion',
-                'entidad' => 'users',
-                'entidad_id' => '2',
-                'descripcion' => 'Cierre de sesion.',
-                'valores_anteriores' => null,
-                'valores_nuevos' => '{"email": "jose@ecg.com"}',
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
-                'created_at' => '2026-05-21 14:20:55',
-                'updated_at' => '2026-05-21 14:20:55',
-            ],
-            [
-                'auditoria_id' => 4,
-                'usuario_id' => 1,
-                'accion' => 'login',
-                'modulo' => 'Autenticacion',
-                'entidad' => 'users',
-                'entidad_id' => '1',
-                'descripcion' => 'Inicio de sesion exitoso.',
-                'valores_anteriores' => null,
-                'valores_nuevos' => '{"rol": "Administrador", "email": "admin@ecg.com"}',
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
-                'created_at' => '2026-05-21 14:21:04',
-                'updated_at' => '2026-05-21 14:21:04',
-            ],
-            [
-                'auditoria_id' => 5,
-                'usuario_id' => 1,
-                'accion' => 'crear',
-                'modulo' => 'Usuarios',
-                'entidad' => 'users',
-                'entidad_id' => '3',
-                'descripcion' => 'Creacion de usuario.',
-                'valores_anteriores' => null,
-                'valores_nuevos' => '{"auditoria_id": 3, "name": "Fermin", "email": "fermin@ecg.com", "estado": true, "role_id": "3"}',
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
-                'created_at' => '2026-05-21 14:21:50',
-                'updated_at' => '2026-05-21 14:21:50',
-            ],
-            [
-                'auditoria_id' => 6,
-                'usuario_id' => 1,
-                'accion' => 'logout',
-                'modulo' => 'Autenticacion',
-                'entidad' => 'users',
-                'entidad_id' => '1',
-                'descripcion' => 'Cierre de sesion.',
-                'valores_anteriores' => null,
-                'valores_nuevos' => '{"email": "admin@ecg.com"}',
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
-                'created_at' => '2026-05-21 14:21:55',
-                'updated_at' => '2026-05-21 14:21:55',
-            ],
-            [
-                'auditoria_id' => 7,
-                'usuario_id' => 3,
-                'accion' => 'login',
-                'modulo' => 'Autenticacion',
-                'entidad' => 'users',
-                'entidad_id' => '3',
-                'descripcion' => 'Inicio de sesion exitoso.',
-                'valores_anteriores' => null,
-                'valores_nuevos' => '{"rol": "Operador", "email": "fermin@ecg.com"}',
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
-                'created_at' => '2026-05-21 14:22:03',
-                'updated_at' => '2026-05-21 14:22:03',
-            ],
-            [
-                'auditoria_id' => 8,
-                'usuario_id' => 3,
-                'accion' => 'logout',
-                'modulo' => 'Autenticacion',
-                'entidad' => 'users',
-                'entidad_id' => '3',
-                'descripcion' => 'Cierre de sesion.',
-                'valores_anteriores' => null,
-                'valores_nuevos' => '{"email": "fermin@ecg.com"}',
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
-                'created_at' => '2026-05-21 14:53:21',
-                'updated_at' => '2026-05-21 14:53:21',
-            ],
-            [
-                'auditoria_id' => 9,
-                'usuario_id' => 1,
-                'accion' => 'login',
-                'modulo' => 'Autenticacion',
-                'entidad' => 'users',
-                'entidad_id' => '1',
-                'descripcion' => 'Inicio de sesion exitoso.',
-                'valores_anteriores' => null,
-                'valores_nuevos' => '{"rol": "Administrador", "email": "admin@ecg.com"}',
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
-                'created_at' => '2026-05-21 14:53:34',
-                'updated_at' => '2026-05-21 14:53:34',
-            ],
+            ['diagnostico_id' => 1, 'ritmo' => 'Taquicardia Sinusal', 'confianza' => 'ALTO', 'severidad' => 'IMPORTANTE', 'created_at' => '2026-04-06 08:15:00'],
+            ['diagnostico_id' => 2, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-06 09:30:00'],
+            ['diagnostico_id' => 3, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-06 10:45:00'],
+            ['diagnostico_id' => 4, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-07 08:10:00'],
+            ['diagnostico_id' => 5, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-07 09:25:00'],
+            ['diagnostico_id' => 6, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-07 10:40:00'],
+            ['diagnostico_id' => 7, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-07 11:55:00'],
+            ['diagnostico_id' => 8, 'ritmo' => 'Complejo ventricular prematuro', 'confianza' => 'ALTO', 'severidad' => 'IMPORTANTE', 'created_at' => '2026-04-08 08:20:00'],
+            ['diagnostico_id' => 9, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-08 09:35:00'],
+            ['diagnostico_id' => 10, 'ritmo' => 'Bradicardia Sinusal', 'confianza' => 'MEDIO', 'severidad' => 'IMPORTANTE', 'created_at' => '2026-04-09 08:05:00'],
+            ['diagnostico_id' => 11, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-09 09:20:00'],
+            ['diagnostico_id' => 12, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-09 10:35:00'],
+            ['diagnostico_id' => 13, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-10 08:25:00'],
+            ['diagnostico_id' => 14, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-10 09:40:00'],
+            ['diagnostico_id' => 15, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-10 10:55:00'],
+            ['diagnostico_id' => 16, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-13 08:15:00'],
+            ['diagnostico_id' => 17, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-13 09:30:00'],
+            ['diagnostico_id' => 18, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-14 08:10:00'],
+            ['diagnostico_id' => 19, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-14 09:25:00'],
+            ['diagnostico_id' => 20, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-14 10:40:00'],
+            ['diagnostico_id' => 21, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-14 11:55:00'],
+            ['diagnostico_id' => 22, 'ritmo' => 'Bradicardia Sinusal', 'confianza' => 'MEDIO', 'severidad' => 'IMPORTANTE', 'created_at' => '2026-04-15 08:20:00'],
+            ['diagnostico_id' => 23, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-15 09:35:00'],
+            ['diagnostico_id' => 24, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-15 10:50:00'],
+            ['diagnostico_id' => 25, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-16 08:05:00'],
+            ['diagnostico_id' => 26, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-16 09:20:00'],
+            ['diagnostico_id' => 27, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-16 10:35:00'],
+            ['diagnostico_id' => 28, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-17 08:25:00'],
+            ['diagnostico_id' => 29, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-17 09:40:00'],
+            ['diagnostico_id' => 30, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-17 10:55:00'],
+            ['diagnostico_id' => 31, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-20 08:10:00'],
+            ['diagnostico_id' => 32, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-20 09:25:00'],
+            ['diagnostico_id' => 33, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-20 10:40:00'],
+            ['diagnostico_id' => 34, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-20 11:55:00'],
+            ['diagnostico_id' => 35, 'ritmo' => 'Complejo ventricular prematuro', 'confianza' => 'ALTO', 'severidad' => 'IMPORTANTE', 'created_at' => '2026-04-21 08:20:00'],
+            ['diagnostico_id' => 36, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-21 09:35:00'],
+            ['diagnostico_id' => 37, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-22 08:05:00'],
+            ['diagnostico_id' => 38, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-22 09:20:00'],
+            ['diagnostico_id' => 39, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-22 10:35:00'],
+            ['diagnostico_id' => 40, 'ritmo' => 'Complejo ventricular prematuro', 'confianza' => 'ALTO', 'severidad' => 'IMPORTANTE', 'created_at' => '2026-04-23 08:25:00'],
+            ['diagnostico_id' => 41, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-23 09:40:00'],
+            ['diagnostico_id' => 42, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-23 10:55:00'],
+            ['diagnostico_id' => 43, 'ritmo' => 'Bradicardia Sinusal', 'confianza' => 'MEDIO', 'severidad' => 'IMPORTANTE', 'created_at' => '2026-04-24 08:10:00'],
+            ['diagnostico_id' => 44, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-24 09:25:00'],
+            ['diagnostico_id' => 45, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-24 10:40:00'],
+            ['diagnostico_id' => 46, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-27 08:20:00'],
+            ['diagnostico_id' => 47, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-27 09:35:00'],
+            ['diagnostico_id' => 48, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-27 10:50:00'],
+            ['diagnostico_id' => 49, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-27 12:05:00'],
+            ['diagnostico_id' => 50, 'ritmo' => 'Bradicardia Sinusal', 'confianza' => 'MEDIO', 'severidad' => 'IMPORTANTE', 'created_at' => '2026-04-28 08:05:00'],
+            ['diagnostico_id' => 51, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-28 09:20:00'],
+            ['diagnostico_id' => 52, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-28 10:35:00'],
+            ['diagnostico_id' => 53, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-29 08:25:00'],
+            ['diagnostico_id' => 54, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-29 09:40:00'],
+            ['diagnostico_id' => 55, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-29 10:55:00'],
+            ['diagnostico_id' => 56, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-04-30 08:10:00'],
+            ['diagnostico_id' => 57, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-04-30 09:25:00'],
+            ['diagnostico_id' => 58, 'ritmo' => 'Bradicardia Sinusal', 'confianza' => 'MEDIO', 'severidad' => 'IMPORTANTE', 'created_at' => '2026-05-04 08:20:00'],
+            ['diagnostico_id' => 59, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-05-04 09:35:00'],
+            ['diagnostico_id' => 60, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-05-04 10:50:00'],
+            ['diagnostico_id' => 61, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-05-04 12:05:00'],
+            ['diagnostico_id' => 62, 'ritmo' => 'Fibrilacion Auricular', 'confianza' => 'ALTO', 'severidad' => 'CRITICA', 'created_at' => '2026-05-05 08:05:00'],
+            ['diagnostico_id' => 63, 'ritmo' => 'Ritmo Sinusal Normal', 'confianza' => 'ALTO', 'severidad' => 'MENOR', 'created_at' => '2026-05-05 09:20:00'],
         ];
 
+        // ====== PROCESAMIENTO DE DATOS ======
+        // Registra las 63 valoraciones médicas en la auditoría
         foreach ($auditorias as $a) {
-            Auditoria::updateOrCreate(
-                ['auditoria_id' => $a['auditoria_id']],
-                $a
-            );
-        }
-
-        // Sincronizar secuencia solo en Postgres
-        if (DB::connection()->getDriverName() === 'pgsql') {
-            DB::statement("SELECT setval(pg_get_serial_sequence('auditorias', 'auditoria_id'), COALESCE(MAX(auditoria_id), 1)) FROM auditorias");
+            Auditoria::create([
+                // CAMPOS PRIMORDIALES:
+                'usuario_id' => $cardiologoId,              // ✅ El cardiólogo
+                'accion' => 'VALIDACION_DIAGNOSTICO',      // ✅ Qué acción
+                'modulo' => 'Clinico',                      // ✅ Módulo
+                'entidad' => 'diagnosticos',
+                'entidad_id' => (string) $a['diagnostico_id'],
+                'created_at' => $a['created_at'],           // ✅ Cuándo
+                
+                // DATOS MÉDICOS (La valoración):
+                'cardiologo_id' => $cardiologoId,          // ✅ Quién valoró
+                'valoracion_medico' => "Validación confirmada. Ritmo detectado: {$a['ritmo']}. Concordancia entre IA y médico verificada.",
+                'nivel_confianza' => $a['confianza'],
+                'razon_cambio' => 'VALIDACION_MEDICA',
+                'severidad' => $a['severidad'],
+                
+                // CAMPOS OPCIONALES:
+                'descripcion' => "Validación de diagnóstico #{$a['diagnostico_id']}: {$a['ritmo']}",
+                'valores_anteriores' => null,
+                'valores_nuevos' => null,
+                'ip_address' => null,
+                'user_agent' => null,
+            ]);
         }
     }
 }

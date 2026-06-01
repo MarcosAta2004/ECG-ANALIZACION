@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\Auditable;
 
 class Prediccion extends Model
 {
-    use Auditable;
+    use Auditable, HasFactory;
     protected $table      = 'predicciones';
     protected $primaryKey = 'prediccion_id';
 

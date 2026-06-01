@@ -10,13 +10,11 @@ use App\Models\PrefijoPaciente;
 use App\Models\Prediccion;
 use App\Models\RitmoCardiaco;
 use App\Services\ServicioAuditoria;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ImagenController extends Controller
 {
@@ -54,11 +52,7 @@ class ImagenController extends Controller
 
         $archivo   = $request->file('archivo');
         $formato   = $archivo->getClientOriginalExtension();
-        $uuid      = Str::uuid();
-        $nombreUUID = $uuid . '.' . $formato;
-
-        $ruta = $archivo->storeAs('ecg', $nombreUUID, 'public');
-        $hash = hash_file('sha256', $archivo->getRealPath());
+        $ruta = $this->guardarArchivoEcg($archivo, $formato);
 
         $resolucion = null;
         if (in_array($formato, ['png', 'jpg', 'jpeg'])) {
@@ -72,7 +66,6 @@ class ImagenController extends Controller
         $imagen->formato     = $formato;
         $imagen->resolucion  = $resolucion;
         $imagen->tamano_kb   = (int) round($archivo->getSize() / 1024);
-        $imagen->hash        = $hash;
         $imagen->save();
 
         return redirect()->route('upload')->with([
@@ -93,11 +86,7 @@ class ImagenController extends Controller
 
         $archivo    = $request->file('archivo');
         $formato    = $archivo->getClientOriginalExtension();
-        $uuid       = Str::uuid();
-        $nombreUUID = $uuid . '.' . $formato;
-
-        $ruta = $archivo->storeAs('ecg', $nombreUUID, 'public');
-        $hash = hash_file('sha256', $archivo->getRealPath());
+        $ruta = $this->guardarArchivoEcg($archivo, $formato);
 
         $resolucion = null;
         if (in_array($formato, ['png', 'jpg', 'jpeg'])) {
@@ -109,7 +98,6 @@ class ImagenController extends Controller
         $imagen->formato    = $formato;
         $imagen->resolucion = $resolucion;
         $imagen->tamano_kb  = (int) round($archivo->getSize() / 1024);
-        $imagen->hash       = $hash;
         $imagen->save();
 
         return redirect()->route('upload')->with([
@@ -192,10 +180,7 @@ class ImagenController extends Controller
 
             $archivo = $validated['file'];
             $formato = $archivo->getClientOriginalExtension();
-            $uuid = Str::uuid();
-            $nombreUUID = $uuid . '.' . $formato;
-            $ruta = $archivo->storeAs('ecg', $nombreUUID, 'public');
-            $hash = hash_file('sha256', $archivo->getRealPath());
+            $ruta = $this->guardarArchivoEcg($archivo, $formato);
 
             $resolucion = null;
             if (in_array($formato, ['png', 'jpg', 'jpeg'])) {
@@ -209,7 +194,6 @@ class ImagenController extends Controller
             $imagen->formato = $formato;
             $imagen->resolucion = $resolucion;
             $imagen->tamano_kb = (int) round($archivo->getSize() / 1024);
-            $imagen->hash = $hash;
             $imagen->save();
 
             $response = $this->analizarImagenPersistida($imagen);
@@ -265,6 +249,19 @@ class ImagenController extends Controller
         }
     }
 
+    private function guardarArchivoEcg($archivo, string $formato): string
+    {
+        $fecha = now();
+
+        do {
+            $nombre = $fecha->format('Ymd-His') . '.' . strtolower($formato);
+            $ruta = 'ecg/' . $nombre;
+            $fecha = $fecha->copy()->addSecond();
+        } while (Storage::disk('public')->exists($ruta));
+
+        return $archivo->storeAs('ecg', $nombre, 'public');
+    }
+
     private function analizarImagenPersistida(Imagen $imagen)
     {
         if ($imagen->prediccion) {
@@ -277,53 +274,42 @@ class ImagenController extends Controller
         $paciente = $estudio->paciente;
 
         $apiUrl = env('ECG_API_URL', 'http://localhost:8001');
-        $client = new Client(['timeout' => 120]);
 
         try {
             $rutaAbsoluta = Storage::disk('public')->path($imagen->ruta);
             $inicio = now();
 
-            $response = $client->post("{$apiUrl}/predict", [
-                'multipart' => [
-                    [
-                        'name'     => 'file',
-                        'contents' => fopen($rutaAbsoluta, 'r'),
-                        'filename' => basename($imagen->ruta),
-                    ],
-                    [
-                        'name' => 'age',
-                        'contents' => $estudio->edad ?? 0,
-                    ],
-                    [
-                        'name' => 'sex',
-                        'contents' => ($paciente->sexo === 'M') ? 1 : 0,
-                    ],
-                    [
-                        'name' => 'weight',
-                        'contents' => $paciente->peso ?? 0,
-                    ],
-                ],
-            ]);
+            $response = Http::timeout(120)
+                ->attach('file', fopen($rutaAbsoluta, 'r'), basename($imagen->ruta))
+                ->post("{$apiUrl}/predict", [
+                    'age'    => $estudio->edad ?? 0,
+                    'sex'    => ($paciente->sexo === 'M') ? 1 : 0,
+                    'weight' => $paciente->peso ?? 0,
+                ]);
 
-            $data = json_decode($response->getBody()->getContents(), true);
-            $tiempo_ms = (int) $inicio->diffInMilliseconds(now());
-        } catch (RequestException $e) {
-            $msg = 'Error al conectar con el servidor de análisis.';
-            if ($e->hasResponse()) {
-                $body = json_decode($e->getResponse()->getBody()->getContents(), true);
-                $msg = $body['detail'] ?? $msg;
-                if (is_array($msg)) {
-                    // Extract FastAPI validation messages
-                    $errors = [];
-                    foreach ($msg as $error) {
-                        $loc = implode('.', $error['loc'] ?? []);
-                        $errors[] = $loc . ': ' . ($error['msg'] ?? '');
+            if ($response->failed()) {
+                $msg = 'Error al conectar con el servidor de análisis.';
+                $body = $response->json();
+                
+                if ($body) {
+                    $msg = $body['detail'] ?? $msg;
+                    if (is_array($msg)) {
+                        $errors = [];
+                        foreach ($msg as $error) {
+                            $loc = implode('.', $error['loc'] ?? []);
+                            $errors[] = $loc . ': ' . ($error['msg'] ?? '');
+                        }
+                        $msg = 'Error de validación en la IA: ' . implode(', ', $errors);
                     }
-                    $msg = 'Error de validación en la IA: ' . implode(', ', $errors);
                 }
+                return response()->json(['error' => $msg], 502);
             }
 
-            return response()->json(['error' => $msg], 502);
+            $data = $response->json();
+            $tiempo_ms = (int) $inicio->diffInMilliseconds(now());
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Excepción en ImagenController: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['error' => 'Error de conexión con el servidor de análisis: ' . $e->getMessage()], 502);
         }
 
         $labelCode = $data['top_predictions'][0]['code'] ?? 'NORM';

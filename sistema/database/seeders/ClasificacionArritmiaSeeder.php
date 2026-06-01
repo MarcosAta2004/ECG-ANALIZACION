@@ -12,14 +12,14 @@ class ClasificacionArritmiaSeeder extends Seeder
         $data = [
             [
                 'clasificacion_id' => 1,
-                'nombre'           => 'Normal',
+                'nombre'           => 'NORMAL',
                 'estado'           => 1,
                 'created_at'       => '2026-05-04 15:46:27',
                 'updated_at'       => '2026-05-04 15:46:27',
             ],
             [
                 'clasificacion_id' => 2,
-                'nombre'           => 'Arritmia',
+                'nombre'           => 'ARRITMIA',
                 'estado'           => 1,
                 'created_at'       => '2026-05-04 15:46:27',
                 'updated_at'       => '2026-05-04 15:46:27',

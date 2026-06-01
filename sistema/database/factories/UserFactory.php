@@ -12,34 +12,36 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
+    protected $model = User::class;
+
     /**
-     * The current password being used by the factory.
+     * Contraseña por defecto usada en los tests.
      */
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * Define el estado por defecto del modelo.
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'login'              => $this->faker->unique()->userName(),
+            'email'              => $this->faker->unique()->safeEmail(),
+            'nombres'            => $this->faker->firstName(),
+            'apellido_paterno'   => $this->faker->lastName(),
+            'apellido_materno'   => $this->faker->lastName(),
+            'password'           => static::$password ??= Hash::make('password'),
+            'remember_token'     => Str::random(10),
+            'numero_documento'   => $this->faker->numerify('########'),
+            'estado'             => 1,
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
+    /** Usuario desactivado */
+    public function inactivo(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
+        return $this->state(['estado' => 0]);
     }
 }

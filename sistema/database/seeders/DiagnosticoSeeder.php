@@ -79,7 +79,9 @@ class DiagnosticoSeeder extends Seeder
             ['diagnostico_id' => 63, 'estudio_id' => 63, 'ritmo_id' => 1, 'medico_id' => $medicoId, 'concordancia' => true, 'descripcion' => 'Ritmo Sinusal Normal', 'observacion' => '', 'fecha_revision' => '2026-05-05 09:15:00', 'estado' => 1, 'created_at' => '2026-05-05 09:15:00', 'updated_at' => '2026-05-05 09:15:00'],
         ];
 
-        DB::table('diagnosticos')->insert($data);
+        if (DB::table('diagnosticos')->count() == 0) {
+            DB::table('diagnosticos')->insert($data);
+        }
 
         // Sincronizar secuencia solo en Postgres
         if (DB::connection()->getDriverName() === 'pgsql') {

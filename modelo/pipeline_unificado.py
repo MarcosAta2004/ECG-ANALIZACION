@@ -56,7 +56,7 @@ def detectar_region_ecg(img):
     _, binaria = cv2.threshold(gris, 200, 255, cv2.THRESH_BINARY_INV)
     
     proyeccion_h = np.sum(binaria, axis=1)
-    proyeccion_v = np.sum(binaria, axis=0)
+    proyeccion_v = np.sum(binaria, axis=0)  
     
     umbral_h = np.max(proyeccion_h) * 0.05
     umbral_v = np.max(proyeccion_v) * 0.05

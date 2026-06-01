@@ -55,6 +55,8 @@ app.add_middleware(
 
 def _cargar_imagen_desde_bytes(data: bytes, filename: str) -> np.ndarray:
     """Carga una imagen PNG/JPG desde bytes y la devuelve como array BGR."""
+    if not data:
+        raise ValueError(f"El archivo '{filename}' está vacío")
     arr = np.frombuffer(data, dtype=np.uint8)
     img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
     if img is None:
