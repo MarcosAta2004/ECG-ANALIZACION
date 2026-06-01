@@ -371,6 +371,7 @@ class ImagenController extends Controller
             'image_id' => $imagen->imagen_id,
             'ritmo' => $ritmo->nombre,
             'label' => $ritmo->label,
+            'is_normal' => $ritmo->label === 'NORM',
             'probabilidad' => $prediccion->probabilidad,
             'tiempo_ms' => $prediccion->tiempo_ms,
             'top_predictions' => $data['top_predictions'] ?? [],

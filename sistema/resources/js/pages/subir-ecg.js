@@ -299,7 +299,13 @@ export function ecgUpload(config = {}) {
         },
 
         setResult(data, signalOverride = null) {
-            const isNormal = data.label?.toLowerCase().includes('normal');
+            const label = String(data.label ?? '').trim().toUpperCase();
+            const isNormal = Boolean(
+                data.is_normal ||
+                data.type === 'normal' ||
+                label === 'NORM' ||
+                label.includes('NORMAL')
+            );
             const rawConfidence = Number(
                 data.confidence ?? Math.round(Math.max(...(data.scores ?? [0.82])) * 100)
             );
