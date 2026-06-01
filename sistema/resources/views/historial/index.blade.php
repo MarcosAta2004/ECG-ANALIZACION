@@ -93,17 +93,17 @@
                         <tr>
                             <td>
                                 <a
-                                    :href="item.report_url"
+                                    :href="item.ecg_url"
                                     target="_blank"
                                     rel="noopener"
                                     class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
-                                    :title="'Generar reporte de ' + item.filename"
+                                    :title="'Ver ECG de ' + item.filename"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0A9 9 0 1112 3a9 9 0 019 9z" />
                                     </svg>
                                     <div class="flex flex-col items-start leading-tight">
-                                        <span class="font-medium text-sm">Reporte</span>
+                                        <span class="font-medium text-sm">Ver ECG</span>
                                         <span class="text-xs text-muted-foreground" x-text="item.filename"></span>
                                     </div>
                                 </a>
@@ -135,8 +135,28 @@
                                 </template>
                             </td>
                             <td>
-                                @if($canReview)
-                                    <div class="flex items-center justify-end gap-2">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a
+                                        :href="item.ecg_url"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="p-2 rounded-lg transition-all duration-200 active:scale-90 hover:bg-primary/10 text-primary hover:text-primary"
+                                        :title="'Ver ECG de ' + item.filename"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0A9 9 0 1112 3a9 9 0 019 9z" />
+                                        </svg>
+                                    </a>
+                                    <a
+                                        :href="item.ecg_download_url"
+                                        class="p-2 rounded-lg transition-all duration-200 active:scale-90 hover:bg-primary/10 text-primary hover:text-primary"
+                                        :title="'Descargar ECG de ' + item.filename"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                    </a>
+                                    @if($canReview)
                                         <button
                                             type="button"
                                             @click="openReview(item)"
@@ -148,10 +168,8 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                             </svg>
                                         </button>
-                                    </div>
-                                @else
-                                    <span class="text-xs text-muted-foreground italic">Solo lectura</span>
-                                @endif
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     </template>
@@ -170,18 +188,30 @@
                         </div>
                         <div class="flex flex-col items-end gap-2 shrink-0">
                             <span class="badge" :class="isNormalValue(item.result) ? 'badge-success' : 'badge-warning'" x-text="item.result === 'normal' ? 'Normal' : 'Arritmia'"></span>
-                            <a
-                                :href="item.report_url"
-                                target="_blank"
-                                rel="noopener"
-                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
-                                :title="'Generar reporte de ' + item.filename"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                <span class="text-xs font-medium">Reporte</span>
-                            </a>
+                            <div class="flex items-center gap-2">
+                                <a
+                                    :href="item.ecg_url"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                                    :title="'Ver ECG de ' + item.filename"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0A9 9 0 1112 3a9 9 0 019 9z" />
+                                    </svg>
+                                    <span class="text-xs font-medium">Ver</span>
+                                </a>
+                                <a
+                                    :href="item.ecg_download_url"
+                                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                                    :title="'Descargar ECG de ' + item.filename"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    <span class="text-xs font-medium">Descargar</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                     <div class="space-y-1">
@@ -194,8 +224,28 @@
                             <p class="text-xs text-muted-foreground italic">Sin valoracion medica</p>
                         </template>
                     </div>
-                    @if($canReview)
-                        <div class="mt-3 flex justify-end">
+                    <div class="mt-3 flex justify-end gap-2">
+                        <a
+                            :href="item.ecg_url"
+                            target="_blank"
+                            rel="noopener"
+                            class="p-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                            :title="'Ver ECG de ' + item.filename"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0A9 9 0 1112 3a9 9 0 019 9z" />
+                            </svg>
+                        </a>
+                        <a
+                            :href="item.ecg_download_url"
+                            class="p-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                            :title="'Descargar ECG de ' + item.filename"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                        </a>
+                        @if($canReview)
                             <button
                                 type="button"
                                 @click="openReview(item)"
@@ -206,8 +256,8 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                 </svg>
                             </button>
-                        </div>
-                    @endif
+                        @endif
+                    </div>
                 </div>
             </template>
         </div>

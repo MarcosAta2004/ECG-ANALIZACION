@@ -117,6 +117,8 @@ Route::middleware(['auth'])->group(function () {
             Route::put('update/{imagen}', 'update')->name('imagenes.update');
             Route::delete('delete/{imagen}', 'destroy')->name('imagenes.destroy');
             Route::put('activar/{imagen}', 'activar')->name('imagenes.activar');
+            Route::get('{imagen}/ver-ecg', 'verEcg')->name('imagenes.ecg.ver');
+            Route::get('{imagen}/descargar-ecg', 'descargarEcg')->name('imagenes.ecg.download');
             
             // Procesamiento de IA
             Route::post('analyze', 'analyze')->name('imagenes.analyze');
@@ -200,6 +202,7 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
-    // RUTA PARA DESCARGAR EL REPORTE PDF DEL ESTUDIO (PROTEGIDA)
-    Route::get('reportes/estudio/{id}/pdf', [App\Http\Controllers\ReporteController::class, 'descargarPDF'])->name('reportes.estudio.pdf');
+    // RUTAS PARA VER Y DESCARGAR EL REPORTE PDF DEL ESTUDIO (PROTEGIDAS)
+    Route::get('reportes/estudio/{id}/pdf', [App\Http\Controllers\ReporteController::class, 'verPDF'])->name('reportes.estudio.pdf');
+    Route::get('reportes/estudio/{id}/pdf/descargar', [App\Http\Controllers\ReporteController::class, 'descargarPDF'])->name('reportes.estudio.pdf.download');
 });

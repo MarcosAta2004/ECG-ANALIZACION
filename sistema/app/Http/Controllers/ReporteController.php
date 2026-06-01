@@ -190,7 +190,21 @@ class ReporteController extends Controller
         ]);
     }
 
+    public function verPDF($id)
+    {
+        [$pdf, $filename] = $this->generarPdfEstudio($id);
+
+        return $pdf->stream($filename);
+    }
+
     public function descargarPDF($id)
+    {
+        [$pdf, $filename] = $this->generarPdfEstudio($id);
+
+        return $pdf->download($filename);
+    }
+
+    private function generarPdfEstudio($id): array
     {
         // 1. Obtener el estudio con todas sus relaciones
         $estudio = \App\Models\Estudio::with(['paciente', 'diagnostico.ritmoCardiaco', 'imagen.prediccion.ritmoCardiaco'])->findOrFail($id);
@@ -250,8 +264,8 @@ class ReporteController extends Controller
             $filename,
             'Reporte clinico generado desde historial.'
         );
-        
-        return $pdf->download($filename);
+
+        return [$pdf, $filename];
     }
 
     private function registrarReporteGenerado(Estudio $estudio, string $filename, string $resumen): Reporte

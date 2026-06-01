@@ -134,6 +134,22 @@ class ImagenController extends Controller
         ]);
     }
 
+    public function verEcg(Imagen $imagen)
+    {
+        abort_unless(Storage::disk('public')->exists($imagen->ruta), 404);
+
+        return response()->file(Storage::disk('public')->path($imagen->ruta), [
+            'Content-Type' => Storage::disk('public')->mimeType($imagen->ruta) ?? 'application/octet-stream',
+        ]);
+    }
+
+    public function descargarEcg(Imagen $imagen)
+    {
+        abort_unless(Storage::disk('public')->exists($imagen->ruta), 404);
+
+        return Storage::disk('public')->download($imagen->ruta, basename($imagen->ruta));
+    }
+
     public function analyze(Request $request)
     {
         $validated = $request->validate([
