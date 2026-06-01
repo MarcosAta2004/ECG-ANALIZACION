@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Estudio;
 use App\Models\Paciente;
+use App\Models\RitmoCardiaco;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -47,17 +48,24 @@ class EstudioController extends Controller
         $history->getCollection()->transform(function($img) {
             $prediccion = $img->prediccion;
             $diagnostico = $img->estudio->diagnostico;
+            $isNormalRhythm = static fn ($label) => mb_strtoupper(trim((string) $label), 'UTF-8') === 'NORM';
+
             return [
                 'id' => $img->imagen_id,
+                'study_id' => $img->estudio_id,
+                'report_url' => route('reportes.estudio.pdf', ['id' => $img->estudio_id]),
                 'filename' => $img->nombre_original ?? $img->filename,
                 'patient' => $img->estudio->paciente->codigo_generado ?? 'N/A',
                 'date' => $img->created_at->format('d/m/Y'),
                 'time' => $img->created_at->format('H:i'),
                 'rhythm' => $prediccion->ritmo->nombre ?? 'N/A',
                 'probability' => $prediccion ? round($prediccion->probabilidad * 100, 1) : 0,
-                'result' => ($prediccion->ritmo->label ?? '') === 'NORM' ? 'normal' : 'arritmia',
-                'doctor_result' => $diagnostico ? (($diagnostico->resultado === 'Normal' || $diagnostico->resultado === 'normal') ? 'normal' : 'arritmia') : null,
-                'doctor_label' => $diagnostico->ritmoCardiaco->nombre ?? null,
+                'result' => $isNormalRhythm($prediccion->ritmo->label ?? '') ? 'normal' : 'arritmia',
+                'doctor_result' => $diagnostico
+                    ? ($isNormalRhythm($diagnostico->ritmoCardiaco?->label ?? '') ? 'normal' : 'arritmia')
+                    : null,
+                'doctor_ritmo_id' => $diagnostico?->ritmo_id,
+                'doctor_label' => $diagnostico->ritmoCardiaco?->nombre ?? null,
                 'doctor_notes' => $diagnostico->observacion ?? '',
             ];
         });
@@ -72,8 +80,16 @@ class EstudioController extends Controller
 
         $roleName = mb_strtoupper((string) session('user.role'), 'UTF-8');
         $canReview = in_array($roleName, ['ADMINISTRADOR', 'CARDIOLOGO'], true);
+        $ritmos = RitmoCardiaco::where('estado', 1)
+            ->orderBy('nombre')
+            ->get()
+            ->map(fn ($ritmo) => [
+                'ritmo_id' => $ritmo->ritmo_id,
+                'nombre' => $ritmo->nombre,
+                'label' => $ritmo->label,
+            ]);
 
-        return view('historial.index', compact('history', 'stats', 'filters', 'canReview'));
+        return view('historial.index', compact('history', 'stats', 'filters', 'canReview', 'ritmos'));
     }
 
     public function store(Request $request)

@@ -20,6 +20,7 @@
     class="space-y-6"
     x-data="historyPage({
         history: {{ Js::from($history->items()) }},
+        ritmos: {{ Js::from($ritmos) }},
         csrf: '{{ csrf_token() }}',
         canReview: {{ Js::from($canReview) }},
         reviewUrlTemplate: '{{ route('diagnosticos.review', ['imagen' => '__ID__']) }}',
@@ -79,7 +80,7 @@
             <table class="table-ecg">
                 <thead>
                     <tr>
-                        <th>Archivo</th>
+                        <th>Reporte</th>
                         <th>Paciente</th>
                         <th>Fecha</th>
                         <th>Ritmo Detectado</th>
@@ -93,14 +94,21 @@
                     <template x-for="item in history" :key="item.id">
                         <tr>
                             <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="p-2 rounded-lg" style="background:hsl(var(--primary)/0.1);">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
+                                <a
+                                    :href="item.report_url"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                                    :title="'Generar reporte de ' + item.filename"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    <div class="flex flex-col items-start leading-tight">
+                                        <span class="font-medium text-sm">Reporte</span>
+                                        <span class="text-xs text-muted-foreground" x-text="item.filename"></span>
                                     </div>
-                                    <span class="font-medium" x-text="item.filename"></span>
-                                </div>
+                                </a>
                             </td>
                             <td>
                                 <span class="font-mono text-xs font-semibold text-primary" x-text="item.patient"></span>
@@ -115,12 +123,12 @@
                             <td x-text="item.rhythm"></td>
                             <td><span class="font-mono text-sm" x-text="item.probability + '%'"></span></td>
                             <td>
-                                <span class="badge" :class="item.type === 'normal' ? 'badge-success' : 'badge-warning'" x-text="item.result"></span>
+                                <span class="badge" :class="isNormalValue(item.result) ? 'badge-success' : 'badge-warning'" x-text="item.result === 'normal' ? 'Normal' : 'Arritmia'"></span>
                             </td>
                             <td>
                                 <template x-if="item.doctor_result">
                                     <div class="flex flex-col gap-0.5">
-                                        <span class="badge" :class="item.doctor_result === 'normal' ? 'badge-success' : 'badge-warning'" x-text="item.doctor_result === 'normal' ? 'Normal' : 'Arritmia'"></span>
+                                        <span class="badge" :class="isNormalValue(item.doctor_result) ? 'badge-success' : 'badge-warning'" x-text="isNormalValue(item.doctor_result) ? 'Normal' : 'Arritmia'"></span>
                                         <span class="text-xs text-muted-foreground" x-show="item.doctor_label" x-text="item.doctor_label || ''"></span>
                                     </div>
                                 </template>
@@ -162,13 +170,27 @@
                             <p class="text-xs font-mono text-primary" x-text="item.patient"></p>
                             <p class="text-xs text-muted-foreground" x-text="item.date + ' • ' + item.time"></p>
                         </div>
-                        <span class="badge" :class="item.type === 'normal' ? 'badge-success' : 'badge-warning'" x-text="item.result"></span>
+                        <div class="flex flex-col items-end gap-2 shrink-0">
+                            <span class="badge" :class="isNormalValue(item.result) ? 'badge-success' : 'badge-warning'" x-text="item.result === 'normal' ? 'Normal' : 'Arritmia'"></span>
+                            <a
+                                :href="item.report_url"
+                                target="_blank"
+                                rel="noopener"
+                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                                :title="'Generar reporte de ' + item.filename"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span class="text-xs font-medium">Reporte</span>
+                            </a>
+                        </div>
                     </div>
                     <div class="space-y-1">
                         <p class="text-xs text-muted-foreground" x-text="'Ritmo: ' + item.rhythm"></p>
                         <p class="text-xs font-mono text-muted-foreground" x-text="'Prob.: ' + item.probability + '%'"></p>
                         <template x-if="item.doctor_result">
-                            <p class="text-xs font-medium" :class="item.doctor_result === 'normal' ? 'text-success' : 'text-warning'" x-text="'Med.: ' + (item.doctor_result === 'normal' ? 'Normal' : 'Arritmia') + (item.doctor_label ? ' • ' + item.doctor_label : '')"></p>
+                            <p class="text-xs font-medium" :class="isNormalValue(item.doctor_result) ? 'text-success' : 'text-warning'" x-text="'Med.: ' + (isNormalValue(item.doctor_result) ? 'Normal' : 'Arritmia') + (item.doctor_label ? ' • ' + item.doctor_label : '')"></p>
                         </template>
                         <template x-if="!item.doctor_result">
                             <p class="text-xs text-muted-foreground italic">Sin valoracion medica</p>
@@ -255,12 +277,18 @@
                 </div>
             </div>
 
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1.5">Diagnostico especifico</label>
-                <input type="text" x-model="reviewModal.label" placeholder="Ej: Fibrilacion auricular" class="input-field w-full" />
+            <div class="mb-4" x-show="reviewModal.result === 'arritmia'" x-transition>
+                <label class="block text-sm font-medium mb-1.5">Ritmo cardiaco especifico <span class="text-destructive">*</span></label>
+                <select x-model="reviewModal.ritmo_id" class="input-field w-full">
+                    <option value="">Selecciona un ritmo</option>
+                    <template x-for="ritmo in arrhythmiaRitmos()" :key="ritmo.ritmo_id">
+                        <option :value="String(ritmo.ritmo_id)" x-text="ritmo.nombre"></option>
+                    </template>
+                </select>
+                <p class="text-xs text-muted-foreground mt-1">Solo aparece cuando se marca arritmia.</p>
             </div>
 
-            <div class="mb-5">
+            <div class="mb-4">
                 <label class="block text-sm font-medium mb-1.5">Notas clinicas</label>
                 <textarea x-model="reviewModal.notes" rows="3" placeholder="Observaciones adicionales del medico" class="input-field w-full resize-none"></textarea>
             </div>

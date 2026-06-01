@@ -8,6 +8,13 @@ class Reporte extends Model
 {
     protected $table      = 'reportes';
     protected $primaryKey = 'reporte_id';
+    protected $fillable = [
+        'estudio_id',
+        'generado_por',
+        'resumen',
+        'ruta_pdf',
+        'estado',
+    ];
 
     // Pertenece a un estudio
     public function estudio()
