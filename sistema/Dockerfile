@@ -9,17 +9,17 @@ RUN npm run build
 # Etapa 2: Imagen final de PHP con Apache
 FROM php:8.2-apache
 
-# Instalar dependencias del sistema y extensiones de PHP requeridas por Laravel y Postgres
+# Instalar dependencias del sistema y extensiones de PHP requeridas por Laravel y MariaDB/MySQL
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
-    libpq-dev \
+    default-mysql-client \
     unzip \
     git \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd zip pdo pdo_pgsql pgsql bcmath \
+    && docker-php-ext-install -j$(nproc) gd zip pdo pdo_mysql mysqli bcmath \
     && a2enmod rewrite \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -47,7 +47,6 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Exponer el puerto 80 para Render
 EXPOSE 80
 
 # Iniciar Apache en primer plano

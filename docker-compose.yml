@@ -1,0 +1,79 @@
+services:
+
+  # ─── Base de datos MariaDB ───────────────────────────────────────────────────
+  db:
+    image: mariadb:11
+    container_name: ecg_mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: bd_arritmias
+      MARIADB_USER: laravel
+      MARIADB_PASSWORD: laravel_pass
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    ports:
+      - "33060:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Aplicación Laravel + Apache ────────────────────────────────────────────
+  app:
+    build:
+      context: ./sistema
+      dockerfile: Dockerfile
+    container_name: ecg_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      modelo:
+        condition: service_started
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: bd_arritmias
+      DB_USERNAME: laravel
+      DB_PASSWORD: laravel_pass
+      ECG_API_URL: http://modelo:8090
+    ports:
+      - "9003:80"
+    volumes:
+      - ./sistema/storage:/var/www/html/storage
+      - ./sistema/bootstrap/cache:/var/www/html/bootstrap/cache
+
+  # ─── Modelo Python/FastAPI ───────────────────────────────────────────────────
+  modelo:
+    build:
+      context: ./modelo
+      dockerfile: Dockerfile
+    container_name: ecg_modelo
+    restart: unless-stopped
+    environment:
+      PORT: 8090
+    ports:
+      - "8090:8090"
+
+  # ─── phpMyAdmin ─────────────────────────────────────────────────────────────
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: ecg_phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8085:80"
+
+volumes:
+  mariadb_data:
