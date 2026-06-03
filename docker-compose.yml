@@ -47,6 +47,10 @@ services:
     volumes:
       - ./sistema/storage:/var/www/html/storage
       - ./sistema/bootstrap/cache:/var/www/html/bootstrap/cache
+    command: >
+      bash -c "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+      && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+      && apache2-foreground"
 
   # ─── Modelo Python/FastAPI ───────────────────────────────────────────────────
   modelo:
