@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Instalar dependencias del sistema necesarias para pdf2image (poppler) y OpenCV
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -19,8 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Definir puerto por defecto
-ENV PORT=8000
-EXPOSE 8000
+ENV PORT=8090
+EXPOSE 8090
 
 # Iniciar la API con uvicorn apuntando al puerto dinámico de Render
 CMD uvicorn api:app --host 0.0.0.0 --port ${PORT}
