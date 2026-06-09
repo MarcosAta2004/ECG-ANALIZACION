@@ -20,7 +20,7 @@ class GrupoCardiacoController extends Controller
         $grupos = $query->orderBy('grupo_id', 'desc')->paginate(10);
         $grupos->appends(['search' => $request->input('search')]);
 
-        return view('mantenimientos.grupo-cardiaco', compact('grupos'));
+        return view('mantenimientos.grupos_cardiacos.index', compact('grupos'));
     }
 
     public function store(Request $request)
@@ -33,11 +33,12 @@ class GrupoCardiacoController extends Controller
         $grupo = new GrupoCardiaco();
         $grupo->nombre      = strtoupper($request->nombre);
         $grupo->descripcion = $request->descripcion ?? null;
+        $grupo->estado = $request->has('estado') ? 1 : 0;
         $grupo->save();
 
         return redirect()->route('grupos-cardiacos.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de guardar correctamente el registro de',
+            'message' => "Se acaba de guardar correctamente el registro de {$grupo->nombre}",
             'alert'   => 'success',
             'data'    => $grupo->nombre,
         ]);
@@ -52,11 +53,12 @@ class GrupoCardiacoController extends Controller
 
         $grupoCardiaco->nombre      = strtoupper($request->nombre);
         $grupoCardiaco->descripcion = $request->descripcion ?? null;
+        $grupoCardiaco->estado = $request->has('estado') ? 1 : 0;
         $grupoCardiaco->save();
 
         return redirect()->route('grupos-cardiacos.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de actualizar correctamente el registro de',
+            'message' => "Se acaba de actualizar correctamente el registro de {$grupoCardiaco->nombre}",
             'alert'   => 'success',
             'data'    => $grupoCardiaco->nombre,
         ]);
@@ -69,7 +71,7 @@ class GrupoCardiacoController extends Controller
 
         return redirect()->route('grupos-cardiacos.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de deshabilitar el registro de',
+            'message' => "Se acaba de deshabilitar el registro de {$grupoCardiaco->nombre}",
             'alert'   => 'danger',
             'data'    => $grupoCardiaco->nombre,
         ]);
@@ -82,7 +84,7 @@ class GrupoCardiacoController extends Controller
 
         return redirect()->route('grupos-cardiacos.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de habilitar el registro de',
+            'message' => "Se acaba de habilitar el registro de {$grupoCardiaco->nombre}",
             'alert'   => 'primary',
             'data'    => $grupoCardiaco->nombre,
         ]);

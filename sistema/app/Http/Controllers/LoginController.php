@@ -36,12 +36,8 @@ class LoginController extends Controller
                 ->with('error', 'Su cuenta está desactivada. Contacte al administrador.');
         }
 
-        $credentials = [
-            'login'    => $loginValue,
-            'password' => $request->input('password'),
-        ];
-
-        if (Auth::attempt($credentials)) {
+        if (\Illuminate\Support\Facades\Hash::check($request->input('password'), $user->password)) {
+            Auth::login($user);
             $authenticatedUser = Auth::user();
             $request->session()->put('user', [
                 'id'      => $authenticatedUser?->id,

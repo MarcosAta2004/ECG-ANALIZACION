@@ -30,7 +30,7 @@ class RitmoCardiacoController extends Controller
 
         $ritmos->appends(['search' => $request->input('search')]);
 
-        return view('mantenimientos.ritmo-cardiaco.index', compact('ritmos', 'grupos', 'niveles', 'clasificaciones'));
+        return view('ritmos_cardiacos.index', compact('ritmos', 'grupos', 'niveles', 'clasificaciones'));
     }
 
     public function store(Request $request)
@@ -51,6 +51,7 @@ class RitmoCardiacoController extends Controller
         $ritmo->label            = strtoupper($request->label);
         $ritmo->nombre           = strtoupper($request->nombre);
         $ritmo->descripcion      = $request->descripcion ?? null;
+        $ritmo->estado           = $request->has('estado') ? 1 : 0;
         $ritmo->save();
 
         return redirect()->route('ritmos-cardiacos.index')->with([
@@ -78,6 +79,7 @@ class RitmoCardiacoController extends Controller
         $ritmoCardiaco->label            = strtoupper($request->label);
         $ritmoCardiaco->nombre           = strtoupper($request->nombre);
         $ritmoCardiaco->descripcion      = $request->descripcion ?? null;
+        $ritmoCardiaco->estado           = $request->has('estado') ? 1 : 0;
         $ritmoCardiaco->save();
 
         return redirect()->route('ritmos-cardiacos.index')->with([

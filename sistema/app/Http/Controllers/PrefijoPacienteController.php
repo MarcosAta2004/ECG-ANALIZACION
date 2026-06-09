@@ -20,7 +20,7 @@ class PrefijoPacienteController extends Controller
         $prefijos = $query->orderBy('prefijo_id', 'desc')->paginate(10);
         $prefijos->appends(['search' => $request->input('search')]);
 
-        return view('mantenimientos.prefijo-paciente', compact('prefijos'));
+        return view('mantenimientos.prefijos_paciente.index', compact('prefijos'));
     }
 
     public function store(Request $request)

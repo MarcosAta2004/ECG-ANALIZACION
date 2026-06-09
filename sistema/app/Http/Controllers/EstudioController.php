@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class EstudioController extends Controller
 {
-    public function index(Request $request)
+    public function history(Request $request)
     {
         $query = \App\Models\Imagen::with(['estudio.paciente', 'estudio.diagnostico', 'prediccion.ritmo']);
 
@@ -94,6 +94,25 @@ class EstudioController extends Controller
         return view('historial.index', compact('history', 'stats', 'filters', 'canReview', 'ritmos'));
     }
 
+    public function index(Request $request)
+    {
+        $query = Estudio::with(['paciente', 'registradoPor']);
+
+        if ($request->has('search')) {
+            $searchTerm = $request->input('search');
+            $query->whereHas('paciente', function ($q) use ($searchTerm) {
+                $q->where('codigo_generado', 'like', '%' . $searchTerm . '%');
+            });
+        }
+
+        $estudios = $query->orderBy('estudio_id', 'desc')->paginate(10);
+        $pacientes = Paciente::where('estado', 1)->get();
+
+        $estudios->appends(['search' => $request->input('search')]);
+
+        return view('estudios.index', compact('estudios', 'pacientes'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -107,6 +126,7 @@ class EstudioController extends Controller
         $estudio->registrado_por = Auth::id();
         $estudio->edad           = $request->edad ?? null;
         $estudio->observaciones  = $request->observaciones ?? null;
+        $estudio->estado         = $request->has('estado') ? 1 : 0;
         $estudio->save();
 
         return redirect()->route('estudios.index')->with([
@@ -126,6 +146,7 @@ class EstudioController extends Controller
 
         $estudio->edad          = $request->edad ?? null;
         $estudio->observaciones = $request->observaciones ?? null;
+        $estudio->estado        = $request->has('estado') ? 1 : 0;
         $estudio->save();
 
         return redirect()->route('estudios.index')->with([
@@ -159,6 +180,13 @@ class EstudioController extends Controller
             'message' => 'Se acaba de habilitar el estudio',
             'alert'   => 'primary',
             'data'    => $estudio->paciente->codigo_generado,
+        ]);
+    }
+
+    public function showObservacion(Estudio $estudio)
+    {
+        return response()->json([
+            'observaciones' => $estudio->observaciones ?? 'No hay observaciones registradas para este estudio.'
         ]);
     }
 }

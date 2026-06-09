@@ -9,29 +9,45 @@ use App\Traits\Auditable;
 class Prediccion extends Model
 {
     use Auditable, HasFactory;
+
     protected $table      = 'predicciones';
     protected $primaryKey = 'prediccion_id';
 
-    protected $casts = [
-        'top_predicciones' => 'array',
+    /**
+     * Campos asignables masivamente (normalizados — sin label_detectado, label_code, tipo)
+     * Esa información se obtiene via relación con ritmos_cardiacos.
+     */
+    protected $fillable = [
+        'imagen_id',
+        'ritmo_id',
+        'probabilidad',
+        'tiempo_ms',
+        'top_predicciones',
+        'estado',
     ];
 
-    // Pertenece a una imagen ECG
+    protected $casts = [
+        'top_predicciones' => 'array',
+        'probabilidad'     => 'float',
+    ];
+
+    // ─── Relaciones ──────────────────────────────────────────────────────────
+
+    /** Imagen ECG asociada */
     public function imagen()
     {
         return $this->belongsTo(Imagen::class, 'imagen_id', 'imagen_id');
     }
 
-    // Ritmo cardíaco predicho (Alias corto)
+    /** Ritmo cardíaco predicho (alias corto) */
     public function ritmo()
     {
         return $this->belongsTo(RitmoCardiaco::class, 'ritmo_id', 'ritmo_id');
     }
 
-    // Ritmo cardíaco predicho por el modelo
+    /** Ritmo cardíaco predicho (nombre explícito, con eager-load de sub-relaciones) */
     public function ritmoCardiaco()
     {
         return $this->belongsTo(RitmoCardiaco::class, 'ritmo_id', 'ritmo_id');
     }
-
 }

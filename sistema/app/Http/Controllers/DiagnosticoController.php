@@ -13,9 +13,15 @@ class DiagnosticoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Diagnostico::with(['estudio.paciente', 'ritmoCardiaco', 'medico']);
+        $query = Diagnostico::with([
+            'estudio.paciente',
+            'ritmoCardiaco.grupoCardiaco',
+            'ritmoCardiaco.nivelGravedad',
+            'ritmoCardiaco.clasificacionArritmia',
+            'registrador',
+        ]);
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $searchTerm = $request->input('search');
             $query->whereHas('estudio.paciente', function ($q) use ($searchTerm) {
                 $q->where('codigo_generado', 'like', '%' . $searchTerm . '%');
@@ -24,7 +30,7 @@ class DiagnosticoController extends Controller
 
         $diagnosticos = $query->orderBy('diagnostico_id', 'desc')->paginate(10);
 
-        // Solo estudios activos que aún no tienen diagnóstico registrado
+        // Solo estudios activos sin diagnóstico registrado
         $estudios = Estudio::with('paciente')
             ->where('estado', 1)
             ->doesntHave('diagnostico')
@@ -43,23 +49,21 @@ class DiagnosticoController extends Controller
             'estudio_id'   => 'required|exists:estudios,estudio_id|unique:diagnosticos,estudio_id',
             'ritmo_id'     => 'required|exists:ritmos_cardiacos,ritmo_id',
             'concordancia' => 'nullable|boolean',
-            'descripcion'  => 'nullable|max:200',
-            'observacion'  => 'nullable',
+            'observacion'  => 'nullable|string',
         ]);
 
         $diagnostico = new Diagnostico();
-        $diagnostico->estudio_id    = $request->estudio_id;
-        $diagnostico->ritmo_id      = $request->ritmo_id;
-        $diagnostico->medico_id     = Auth::id();
-        $diagnostico->concordancia  = $request->concordancia ?? null;
-        $diagnostico->descripcion   = $request->descripcion ?? null;
-        $diagnostico->observacion   = $request->observacion ?? null;
-        $diagnostico->fecha_revision = now();
+        $diagnostico->estudio_id      = $request->estudio_id;
+        $diagnostico->ritmo_id        = $request->ritmo_id;
+        $diagnostico->registrado_por  = Auth::id();
+        $diagnostico->concordancia    = $request->concordancia ?? null;
+        $diagnostico->observacion     = $request->observacion ?? null;
+        $diagnostico->fecha_revision  = now();
         $diagnostico->save();
 
         return redirect()->route('diagnosticos.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de registrar correctamente el diagnóstico del estudio',
+            'message' => 'Se registró correctamente el diagnóstico del estudio',
             'alert'   => 'success',
             'data'    => $diagnostico->estudio->paciente->codigo_generado,
         ]);
@@ -70,20 +74,19 @@ class DiagnosticoController extends Controller
         $request->validate([
             'ritmo_id'     => 'required|exists:ritmos_cardiacos,ritmo_id',
             'concordancia' => 'nullable|boolean',
-            'descripcion'  => 'nullable|max:200',
-            'observacion'  => 'nullable',
+            'observacion'  => 'nullable|string',
         ]);
 
-        $diagnostico->ritmo_id      = $request->ritmo_id;
-        $diagnostico->concordancia  = $request->concordancia ?? null;
-        $diagnostico->descripcion   = $request->descripcion ?? null;
-        $diagnostico->observacion   = $request->observacion ?? null;
+        $diagnostico->ritmo_id       = $request->ritmo_id;
+        $diagnostico->registrado_por = Auth::id();
+        $diagnostico->concordancia   = $request->concordancia ?? null;
+        $diagnostico->observacion    = $request->observacion ?? null;
         $diagnostico->fecha_revision = now();
         $diagnostico->save();
 
         return redirect()->route('diagnosticos.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de actualizar correctamente el diagnóstico del estudio',
+            'message' => 'Se actualizó correctamente el diagnóstico del estudio',
             'alert'   => 'success',
             'data'    => $diagnostico->estudio->paciente->codigo_generado,
         ]);
@@ -96,7 +99,7 @@ class DiagnosticoController extends Controller
 
         return redirect()->route('diagnosticos.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de deshabilitar el diagnóstico',
+            'message' => 'Se deshabilitó el diagnóstico',
             'alert'   => 'danger',
             'data'    => $diagnostico->estudio->paciente->codigo_generado,
         ]);
@@ -109,14 +112,50 @@ class DiagnosticoController extends Controller
 
         return redirect()->route('diagnosticos.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de habilitar el diagnóstico',
+            'message' => 'Se habilitó el diagnóstico',
             'alert'   => 'primary',
             'data'    => $diagnostico->estudio->paciente->codigo_generado,
         ]);
     }
 
     /**
-     * Guarda una valoración médica rápida desde el Historial (AJAX)
+     * verEcgEstudio — AJAX: devuelve datos del estudio + URL del ECG para abrir el visor en el modal.
+     * GET /clinico/diagnosticos/estudio/{estudio}/info
+     */
+    public function verEcgEstudio(\App\Models\Estudio $estudio)
+    {
+        $estudio->loadMissing([
+            'paciente',
+            'imagen.prediccion.ritmoCardiaco',
+        ]);
+
+        $imagen     = $estudio->imagen;
+        $prediccion = $imagen?->prediccion;
+        $ritmoIa    = $prediccion?->ritmoCardiaco;
+
+        // URL pública del ECG para verlo en el modal
+        $ecgUrl = $imagen
+            ? route('imagenes.ecg.ver', $imagen->imagen_id)
+            : null;
+
+        return response()->json([
+            'estudio_id'     => $estudio->estudio_id,
+            'paciente'       => $estudio->paciente?->codigo_generado,
+            'tiene_ecg'      => (bool) $imagen,
+            'ecg_url'        => $ecgUrl,
+            'ecg_formato'    => $imagen?->formato,
+            'tiene_ia'       => (bool) $prediccion,
+            'ia_ritmo_id'    => $ritmoIa?->ritmo_id,
+            'ia_ritmo_label' => $ritmoIa?->label,
+            'ia_ritmo_nombre'=> $ritmoIa?->nombre,
+            'ia_probabilidad'=> $prediccion ? round($prediccion->probabilidad * 100, 2) : null,
+        ]);
+    }
+
+    /**
+     * Guarda una valoración médica rápida desde el Historial (AJAX).
+     * concordancia = true  si el ritmo del cardiólogo coincide con el de la IA
+     * concordancia = false si discrepa
      */
     public function review(Request $request, \App\Models\Imagen $imagen)
     {
@@ -128,35 +167,38 @@ class DiagnosticoController extends Controller
 
         $imagen->loadMissing('prediccion.ritmo');
         $estudio = $imagen->estudio;
+
         $ritmo = $validated['doctor_result'] === 'normal'
             ? (\App\Models\RitmoCardiaco::where('label', 'NORM')->first() ?? \App\Models\RitmoCardiaco::firstOrFail())
             : \App\Models\RitmoCardiaco::findOrFail($validated['doctor_ritmo_id']);
+
         $ritmoIa = $imagen->prediccion?->ritmo;
-        $concordancia = $ritmoIa && $ritmo
-            ? mb_strtoupper(trim((string) $ritmoIa->label), 'UTF-8') === mb_strtoupper(trim((string) $ritmo->label), 'UTF-8')
+
+        // Concordancia: booleano estricto (1 / 0)
+        $concordancia = ($ritmoIa && $ritmo)
+            ? (mb_strtoupper(trim((string) $ritmoIa->label), 'UTF-8') === mb_strtoupper(trim((string) $ritmo->label), 'UTF-8'))
             : null;
 
         $diagnostico = \App\Models\Diagnostico::updateOrCreate(
             ['estudio_id' => $estudio->estudio_id],
             [
-                'ritmo_id'      => $ritmo->ritmo_id,
-                'medico_id'     => Auth::id(),
-                'concordancia'  => $concordancia,
-                'observacion'   => $validated['doctor_notes'],
-                'descripcion'   => $ritmo->nombre,
-                'fecha_revision'=> now(),
+                'ritmo_id'       => $ritmo->ritmo_id,
+                'registrado_por' => Auth::id(),
+                'concordancia'   => $concordancia,
+                'observacion'    => $validated['doctor_notes'],
+                'fecha_revision' => now(),
             ]
         );
 
         return response()->json([
-            'success' => true,
-            'message' => 'Valoración guardada',
-            'reviewed_at' => $diagnostico->fecha_revision->format('d/m/Y H:i')
+            'success'     => true,
+            'message'     => 'Valoración guardada',
+            'reviewed_at' => $diagnostico->fecha_revision->format('d/m/Y H:i'),
         ]);
     }
 
     /**
-     * Elimina una valoración médica desde el Historial (AJAX)
+     * Elimina una valoración médica desde el Historial (AJAX).
      */
     public function deleteReview(\App\Models\Imagen $imagen)
     {

@@ -20,27 +20,16 @@ class ImagenController extends Controller
 {
     public function index(Request $request)
     {
-        $pacientes = Paciente::with('prefijoPaciente')
-            ->where('estado', 1)
-            ->orderByDesc('paciente_id')
-            ->get()
-            ->map(function ($paciente) {
-                return [
-                    'paciente_id' => $paciente->paciente_id,
-                    'codigo_generado' => $paciente->codigo_generado,
-                    'prefijo_id' => $paciente->prefijo_id,
-                    'fecha_nacimiento' => $paciente->fecha_nacimiento,
-                    'edad' => $paciente->fecha_nacimiento ? now()->diffInYears($paciente->fecha_nacimiento) : null,
-                    'sexo' => $paciente->sexo,
-                    'peso' => $paciente->peso,
-                ];
-            });
+        $query = Imagen::with(['estudio.paciente']);
+        $imagenes = $query->orderBy('imagen_id', 'desc')->paginate(10);
+        $estudiosDisponibles = Estudio::doesntHave('imagen')->with('paciente')->where('estado', 1)->get();
+        return view('imagenes.index', compact('imagenes', 'estudiosDisponibles'));
+    }
 
-        $prefijos = PrefijoPaciente::where('estado', 1)
-            ->orderBy('nombre')
-            ->get(['prefijo_id', 'nombre', 'descripcion']);
-
-        return view('subir-ecg.index', compact('pacientes', 'prefijos'));
+    public function upload(Request $request)
+    {
+        $estudiosDisponibles = Estudio::doesntHave('imagen')->with('paciente')->where('estado', 1)->get();
+        return view('imagenes.subir_ecg.index', compact('estudiosDisponibles'));
     }
 
     public function store(Request $request)
@@ -68,12 +57,7 @@ class ImagenController extends Controller
         $imagen->tamano_kb   = (int) round($archivo->getSize() / 1024);
         $imagen->save();
 
-        return redirect()->route('upload')->with([
-            'ok'      => 'enabled',
-            'message' => 'Se acaba de cargar correctamente la imagen ECG del estudio',
-            'alert'   => 'success',
-            'data'    => $imagen->estudio->paciente->codigo_generado,
-        ]);
+        if ($request->wantsJson()) { return response()->json(['success' => true, 'imagen_id' => $imagen->imagen_id]); } return redirect()->route('imagenes.index')->with(['ok' => 'enabled', 'message' => 'Se acaba de cargar correctamente la imagen ECG del estudio', 'alert' => 'success', 'data' => $imagen->estudio->paciente->codigo_generado]);
     }
 
     public function update(Request $request, Imagen $imagen)
@@ -100,12 +84,7 @@ class ImagenController extends Controller
         $imagen->tamano_kb  = (int) round($archivo->getSize() / 1024);
         $imagen->save();
 
-        return redirect()->route('upload')->with([
-            'ok'      => 'enabled',
-            'message' => 'Se acaba de reemplazar correctamente la imagen ECG del estudio',
-            'alert'   => 'success',
-            'data'    => $imagen->estudio->paciente->codigo_generado,
-        ]);
+        if ($request->wantsJson()) { return response()->json(['success' => true, 'imagen_id' => $imagen->imagen_id]); } return redirect()->route('imagenes.index')->with(['ok' => 'enabled', 'message' => 'Se acaba de cargar correctamente la imagen ECG del estudio', 'alert' => 'success', 'data' => $imagen->estudio->paciente->codigo_generado]);
     }
 
     public function destroy(Imagen $imagen)
@@ -113,12 +92,7 @@ class ImagenController extends Controller
         $imagen->estado = 0;
         $imagen->save();
 
-        return redirect()->route('upload')->with([
-            'ok'      => 'enabled',
-            'message' => 'Se acaba de deshabilitar la imagen ECG',
-            'alert'   => 'danger',
-            'data'    => $imagen->estudio->paciente->codigo_generado,
-        ]);
+        if ($request->wantsJson()) { return response()->json(['success' => true, 'imagen_id' => $imagen->imagen_id]); } return redirect()->route('imagenes.index')->with(['ok' => 'enabled', 'message' => 'Se acaba de cargar correctamente la imagen ECG del estudio', 'alert' => 'success', 'data' => $imagen->estudio->paciente->codigo_generado]);
     }
 
     public function activar(Imagen $imagen)
@@ -126,20 +100,21 @@ class ImagenController extends Controller
         $imagen->estado = 1;
         $imagen->save();
 
-        return redirect()->route('upload')->with([
-            'ok'      => 'enabled',
-            'message' => 'Se acaba de habilitar la imagen ECG',
-            'alert'   => 'primary',
-            'data'    => $imagen->estudio->paciente->codigo_generado,
-        ]);
+        if ($request->wantsJson()) { return response()->json(['success' => true, 'imagen_id' => $imagen->imagen_id]); } return redirect()->route('imagenes.index')->with(['ok' => 'enabled', 'message' => 'Se acaba de cargar correctamente la imagen ECG del estudio', 'alert' => 'success', 'data' => $imagen->estudio->paciente->codigo_generado]);
     }
 
     public function verEcg(Imagen $imagen)
     {
         abort_unless(Storage::disk('public')->exists($imagen->ruta), 404);
 
-        return response()->file(Storage::disk('public')->path($imagen->ruta), [
-            'Content-Type' => Storage::disk('public')->mimeType($imagen->ruta) ?? 'application/octet-stream',
+        $path     = Storage::disk('public')->path($imagen->ruta);
+        $mimeType = Storage::disk('public')->mimeType($imagen->ruta) ?? 'application/pdf';
+        $filename = basename($imagen->ruta);
+
+        // Sin X-Frame-Options para que el iframe del modal pueda embeber el archivo
+        return response()->file($path, [
+            'Content-Type'        => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
         ]);
     }
 
@@ -258,9 +233,10 @@ class ImagenController extends Controller
             return $response;
         } catch (\Throwable $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Error en analizar(): ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
             return response()->json([
-                'error' => 'Error al analizar la imagen ECG.',
+                'error' => 'Error al analizar la imagen ECG: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -282,7 +258,7 @@ class ImagenController extends Controller
     {
         if ($imagen->prediccion) {
             return response()->json([
-                'error' => 'Esta imagen ya tiene una predicción registrada.',
+                'error' => 'Esta imagen ya tiene una predicci+�n registrada.',
             ], 409);
         }
 
@@ -304,7 +280,7 @@ class ImagenController extends Controller
                 ]);
 
             if ($response->failed()) {
-                $msg = 'Error al conectar con el servidor de análisis.';
+                $msg = 'Error al conectar con el servidor de an+�lisis.';
                 $body = $response->json();
                 
                 if ($body) {
@@ -315,7 +291,7 @@ class ImagenController extends Controller
                             $loc = implode('.', $error['loc'] ?? []);
                             $errors[] = $loc . ': ' . ($error['msg'] ?? '');
                         }
-                        $msg = 'Error de validación en la IA: ' . implode(', ', $errors);
+                        $msg = 'Error de validaci+�n en la IA: ' . implode(', ', $errors);
                     }
                 }
                 return response()->json(['error' => $msg], 502);
@@ -324,8 +300,8 @@ class ImagenController extends Controller
             $data = $response->json();
             $tiempo_ms = (int) $inicio->diffInMilliseconds(now());
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Excepción en ImagenController: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return response()->json(['error' => 'Error de conexión con el servidor de análisis: ' . $e->getMessage()], 502);
+            \Illuminate\Support\Facades\Log::error('Excepci+�n en ImagenController: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['error' => 'Error de conexi+�n con el servidor de an+�lisis: ' . $e->getMessage()], 502);
         }
 
         $labelCode = $data['top_predictions'][0]['code'] ?? 'NORM';
@@ -333,7 +309,7 @@ class ImagenController extends Controller
 
         if (! $ritmo) {
             return response()->json([
-                'error' => "El código '{$labelCode}' devuelto por el modelo no existe en el catálogo de ritmos.",
+                'error' => "El c+�digo '{$labelCode}' devuelto por el modelo no existe en el cat+�logo de ritmos.",
             ], 422);
         }
 
@@ -352,7 +328,7 @@ class ImagenController extends Controller
             modulo: 'predicciones',
             entidad: 'predicciones',
             entidadId: $prediccion->prediccion_id,
-            descripcion: 'Análisis ECG ejecutado por modelo CNN-LSTM vía FastAPI.',
+            descripcion: 'An+�lisis ECG ejecutado por modelo CNN-LSTM v+�a FastAPI.',
             valoresAnteriores: null,
             valoresNuevos: [
                 'imagen_id'    => $imagen->imagen_id,
@@ -363,7 +339,7 @@ class ImagenController extends Controller
         );
 
         return response()->json([
-            'message' => 'Análisis completado correctamente.',
+            'message' => 'An+�lisis completado correctamente.',
             'prediccion_id' => $prediccion->prediccion_id,
             'patient_id' => $paciente->paciente_id,
             'patient_code' => $paciente->codigo_generado,
@@ -379,3 +355,8 @@ class ImagenController extends Controller
         ]);
     }
 }
+
+
+
+
+

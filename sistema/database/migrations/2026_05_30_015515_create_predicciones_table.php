@@ -27,15 +27,6 @@ return new class extends Migration
             // JSON con probabilidades del top de clases detectadas
             $table->json('top_predicciones')->nullable();
 
-            // Etiqueta detectada por el modelo
-            $table->string('label_detectado')->nullable();
-
-            // Código de la etiqueta (ej: AFIB, NORM, STACH, AFLT)
-            $table->string('label_code')->nullable();
-
-            // Tipo de resultado (arritmia o normal)
-            $table->string('tipo')->nullable();
-
             $table->integer('estado')->default(1);
             $table->timestamps();
         });

@@ -20,7 +20,7 @@ class ClasificacionArritmiaController extends Controller
         $clasificaciones = $query->orderBy('clasificacion_id', 'desc')->paginate(10);
         $clasificaciones->appends(['search' => $request->input('search')]);
 
-        return view('mantenimientos.clasificacion-arritmia', compact('clasificaciones'));
+        return view('mantenimientos.clasificaciones_arritmia.index', compact('clasificaciones'));
     }
 
     public function store(Request $request)
@@ -31,11 +31,12 @@ class ClasificacionArritmiaController extends Controller
 
         $clasificacion = new ClasificacionArritmia();
         $clasificacion->nombre = strtoupper($request->nombre);
+        $clasificacion->estado = $request->has('estado') ? 1 : 0;
         $clasificacion->save();
 
         return redirect()->route('clasificaciones-arritmia.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de guardar correctamente el registro de',
+            'message' => "Se acaba de guardar correctamente el registro de {$clasificacion->nombre}",
             'alert'   => 'success',
             'data'    => $clasificacion->nombre,
         ]);
@@ -48,11 +49,12 @@ class ClasificacionArritmiaController extends Controller
         ]);
 
         $clasificacionArritmia->nombre = strtoupper($request->nombre);
+        $clasificacionArritmia->estado = $request->has('estado') ? 1 : 0;
         $clasificacionArritmia->save();
 
         return redirect()->route('clasificaciones-arritmia.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de actualizar correctamente el registro de',
+            'message' => "Se acaba de actualizar correctamente el registro de {$clasificacionArritmia->nombre}",
             'alert'   => 'success',
             'data'    => $clasificacionArritmia->nombre,
         ]);
@@ -65,7 +67,7 @@ class ClasificacionArritmiaController extends Controller
 
         return redirect()->route('clasificaciones-arritmia.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de deshabilitar el registro de',
+            'message' => "Se acaba de deshabilitar el registro de {$clasificacionArritmia->nombre}",
             'alert'   => 'danger',
             'data'    => $clasificacionArritmia->nombre,
         ]);
@@ -78,7 +80,7 @@ class ClasificacionArritmiaController extends Controller
 
         return redirect()->route('clasificaciones-arritmia.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de habilitar el registro de',
+            'message' => "Se acaba de habilitar el registro de {$clasificacionArritmia->nombre}",
             'alert'   => 'primary',
             'data'    => $clasificacionArritmia->nombre,
         ]);

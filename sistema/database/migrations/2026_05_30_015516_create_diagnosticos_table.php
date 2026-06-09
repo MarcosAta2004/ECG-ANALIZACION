@@ -18,13 +18,12 @@ return new class extends Migration
             $table->unsignedInteger('ritmo_id');
             $table->foreign('ritmo_id')->references('ritmo_id')->on('ritmos_cardiacos');
 
-            $table->unsignedBigInteger('medico_id');
-            $table->foreign('medico_id')->references('id')->on('users');
+            $table->unsignedBigInteger('registrado_por')->nullable();
+            $table->foreign('registrado_por')->references('id')->on('users');
 
             // true = cardiólogo confirma la predicción | false = discrepa
             $table->boolean('concordancia')->nullable();
-
-            $table->string('descripcion', 200)->nullable();
+            
             $table->text('observacion')->nullable();
             $table->timestamp('fecha_revision')->nullable();
             $table->integer('estado')->default(1);

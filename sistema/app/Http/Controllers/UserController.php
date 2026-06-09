@@ -58,7 +58,7 @@ class UserController extends Controller
             'roles'    => Role::count(),
         ];
 
-        return view('usuarios.index', compact('usuarios', 'roles', 'rolesActivos', 'tiposDoc', 'filters', 'stats'));
+        return view('seguridad.users.index', compact('usuarios', 'roles', 'rolesActivos', 'tiposDoc', 'filters', 'stats'));
     }
 
     public function store(Request $request)
@@ -110,7 +110,7 @@ class UserController extends Controller
 
         return redirect()->route('usuarios.index')->with([
             'status'  => 'success',
-            'message' => 'Usuario creado correctamente.',
+            'message' => "Usuario {$usuario->nombres} creado correctamente.",
             'data'    => $usuario->login,
         ]);
     }
@@ -170,7 +170,7 @@ class UserController extends Controller
 
         return redirect()->route('usuarios.index')->with([
             'status'  => 'success',
-            'message' => 'Usuario actualizado correctamente.',
+            'message' => "Usuario {$usuario->nombres} actualizado correctamente.",
             'data'    => $usuario->login,
         ]);
     }
@@ -180,7 +180,7 @@ class UserController extends Controller
         $usuario->update(['estado' => 0]);
         return redirect()->route('usuarios.index')->with([
             'status'  => 'warning',
-            'message' => 'Usuario desactivado.',
+            'message' => "Usuario {$usuario->nombres} desactivado.",
             'data'    => $usuario->login,
         ]);
     }
@@ -190,7 +190,7 @@ class UserController extends Controller
         $usuario->update(['estado' => 1]);
         return redirect()->route('usuarios.index')->with([
             'status'  => 'success',
-            'message' => 'Usuario activado.',
+            'message' => "Usuario {$usuario->nombres} activado.",
             'data'    => $usuario->login,
         ]);
     }

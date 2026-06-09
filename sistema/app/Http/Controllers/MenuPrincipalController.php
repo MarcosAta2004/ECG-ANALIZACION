@@ -30,7 +30,7 @@ class MenuPrincipalController extends Controller
         if ($routeName === 'dashboard') {
             $metrics = $this->buildMetricsReport($request);
 
-            return view('metricas.index', array_merge($metrics, [
+            return view('dashboard.index', array_merge($metrics, [
                 'stats' => $stats,
                 'recentActivity' => $recentActivity,
             ]));

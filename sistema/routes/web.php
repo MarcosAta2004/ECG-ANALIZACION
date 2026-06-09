@@ -31,7 +31,7 @@ Route::get('/', function () {
 });
 
 Route::get('/login', function () { 
-    return view('autenticacion.index'); 
+    return view('auth.login'); 
 })->name('login');
 
 Route::controller(LoginController::class)->group(function () {
@@ -92,7 +92,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('clinico')->group(function () {
 
         Route::get('/history', [EstudioController::class, 'index'])->name('history');
-        Route::get('/upload', [ImagenController::class, 'index'])->name('upload');
+        Route::get('/upload', [ImagenController::class, 'upload'])->name('upload');
         Route::get('/reports', [ReporteController::class, 'index'])->name('reports');
 
         Route::controller(PacienteController::class)->prefix('pacientes')->group(function () {
@@ -109,6 +109,7 @@ Route::middleware(['auth'])->group(function () {
             Route::put('update/{estudio}', 'update')->name('estudios.update');
             Route::delete('delete/{estudio}', 'destroy')->name('estudios.destroy');
             Route::put('activar/{estudio}', 'activar')->name('estudios.activar');
+            Route::get('{estudio}/observacion', 'showObservacion')->name('estudios.observacion');
         });
 
         Route::controller(ImagenController::class)->prefix('imagenes')->group(function () {
@@ -137,6 +138,9 @@ Route::middleware(['auth'])->group(function () {
             Route::put('update/{diagnostico}', 'update')->name('diagnosticos.update');
             Route::delete('delete/{diagnostico}', 'destroy')->name('diagnosticos.destroy');
             Route::put('activar/{diagnostico}', 'activar')->name('diagnosticos.activar');
+
+            // AJAX: devuelve datos del estudio + ECG URL para el visor del modal
+            Route::get('estudio/{estudio}/info', 'verEcgEstudio')->name('diagnosticos.estudio.info');
             
             // Valoración rápida desde Historial (AJAX)
             Route::middleware(['rol:administrador,cardiologo'])->group(function () {

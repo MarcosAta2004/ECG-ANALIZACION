@@ -49,6 +49,7 @@ class PacienteController extends Controller
         $paciente->sexo             = $request->sexo ?? null;
         $paciente->peso             = $request->peso ?? null;
         $paciente->registrado_por   = Auth::id();
+        $paciente->estado           = $request->has('estado') ? 1 : 0;
         $paciente->save();
 
         return redirect()->route('pacientes.index')->with([
@@ -70,6 +71,7 @@ class PacienteController extends Controller
         $paciente->fecha_nacimiento = $request->fecha_nacimiento ?? null;
         $paciente->sexo             = $request->sexo ?? null;
         $paciente->peso             = $request->peso ?? null;
+        $paciente->estado           = $request->has('estado') ? 1 : 0;
         $paciente->save();
 
         return redirect()->route('pacientes.index')->with([

@@ -14,7 +14,7 @@ class RoleController extends Controller
     {
         $roles = Role::with('permissions')->get();
         $permisos = Permission::orderBy('name')->get();
-        return view('roles.index', compact('roles', 'permisos'));
+        return view('seguridad.roles.index', compact('roles', 'permisos'));
     }
 
     /**
@@ -51,10 +51,10 @@ class RoleController extends Controller
 
         $role->permissions()->attach($request->permissions);
 
-        return redirect()->route('role.index')->with([
+        return redirect()->route('roles.index')->with([
             'ok' => 'enabled',
             'alert' => 'success',
-            'message' => 'Rol registrado correctamente',
+            'message' => "Rol {$role->name} registrado correctamente",
             'data' => $role->name,
             'form' => 'create'
         ]);
@@ -109,10 +109,10 @@ class RoleController extends Controller
 
         $role->permissions()->sync($request->permissions);
 
-        return redirect()->route('role.index')->with([
+        return redirect()->route('roles.index')->with([
             'ok' => 'enabled',
             'alert' => 'success',
-            'message' => 'Rol actualizado correctamente',
+            'message' => "Rol {$role->name} actualizado correctamente",
             'data' => $role->name,
             'form' => 'update'
         ]);
@@ -127,10 +127,10 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         $role->delete();
-        return redirect()->route('role.index')->with([
+        return redirect()->route('roles.index')->with([
             'ok' => 'enabled',
             'alert' => 'success',
-            'message' => 'Rol eliminado correctamente',
+            'message' => "Rol {$role->name} eliminado correctamente",
             'data' => $role->name,
             'form' => 'delete'
         ]);
