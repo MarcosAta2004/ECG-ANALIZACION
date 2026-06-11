@@ -326,7 +326,10 @@ class MenuPrincipalController extends Controller
         return $pdf;
     }
 
-
+    public function indexActualizarContrasena()
+    {
+        return view('perfil.index');
+    }
 
     public function actualizarContrasena(Request $request)
     {
