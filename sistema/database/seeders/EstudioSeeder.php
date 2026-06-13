@@ -89,7 +89,7 @@ class EstudioSeeder extends Seeder
                     : null;
 
                 $estudio['edad'] = $fechaNacimiento
-                    ? $fechaNacimiento->diffInYears($fechaEstudio)
+                    ? (int) $fechaNacimiento->diffInYears($fechaEstudio)
                     : null;
 
                 return $estudio;

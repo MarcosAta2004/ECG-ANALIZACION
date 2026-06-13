@@ -145,8 +145,8 @@
 
     {{-- Menú Desplegable: MANTENIMIENTO --}}
     <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="collapse" href="#mantenimiento-collapse" role="button" aria-expanded="false"
-            aria-controls="mantenimiento-collapse">
+        <a class="nav-link" data-bs-toggle="collapse" href="#mantenimiento-collapse" role="button"
+            aria-expanded="false" aria-controls="mantenimiento-collapse">
             <i class="icon">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" width="20">
@@ -185,16 +185,18 @@
                     <span class="item-name">Ritmos Cardíacos</span>
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('niveles-gravedad.index') }}">
-                    <i class="icon">
-                        <svg width="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="3" fill="currentColor" />
-                        </svg>
-                    </i>
-                    <span class="item-name">Niveles de Gravedad</span>
-                </a>
-            </li>
+            @can('niveles.index')
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('niveles-gravedad.index') }}">
+                        <i class="icon">
+                            <svg width="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="3" fill="currentColor" />
+                            </svg>
+                        </i>
+                        <span class="item-name">Niveles de Gravedad</span>
+                    </a>
+                </li>
+            @endcan
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('grupos-cardiacos.index') }}">
                     <i class="icon">
@@ -220,8 +222,8 @@
 
     {{-- Menú Desplegable: SEGURIDAD --}}
     <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="collapse" href="#seguridad-collapse" role="button" aria-expanded="false"
-            aria-controls="seguridad-collapse">
+        <a class="nav-link" data-bs-toggle="collapse" href="#seguridad-collapse" role="button"
+            aria-expanded="false" aria-controls="seguridad-collapse">
             <i class="icon">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" width="20">

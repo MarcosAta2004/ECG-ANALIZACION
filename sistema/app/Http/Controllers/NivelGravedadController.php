@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -8,6 +7,15 @@ use Illuminate\Http\Request;
 
 class NivelGravedadController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('can:niveles.index')->only('index');
+        $this->middleware('can:niveles.edit')->only('update');
+        $this->middleware('can:niveles.create')->only('store');
+        $this->middleware('can:niveles.destroy')->only('destroy','activar');
+    }
+
     public function index(Request $request)
     {
         $query = NivelGravedad::query();
@@ -29,7 +37,7 @@ class NivelGravedadController extends Controller
             'nombre' => 'required|max:100|unique:niveles_gravedad,nombre',
         ]);
 
-        $nivel = new NivelGravedad();
+        $nivel         = new NivelGravedad();
         $nivel->nombre = strtoupper($request->nombre);
         $nivel->estado = $request->has('estado') ? 1 : 0;
         $nivel->save();
@@ -37,8 +45,8 @@ class NivelGravedadController extends Controller
         return redirect()->route('niveles-gravedad.index')->with([
             'ok'      => 'enabled',
             'message' => "Se acaba de guardar correctamente el registro de {$nivel->nombre}",
-            'alert'   => 'success',
-            'data'    => $nivel->nombre,
+            'alert' => 'success',
+            'data'  => $nivel->nombre,
         ]);
     }
 
@@ -55,8 +63,8 @@ class NivelGravedadController extends Controller
         return redirect()->route('niveles-gravedad.index')->with([
             'ok'      => 'enabled',
             'message' => "Se acaba de actualizar correctamente el registro de {$nivelGravedad->nombre}",
-            'alert'   => 'success',
-            'data'    => $nivelGravedad->nombre,
+            'alert' => 'success',
+            'data'  => $nivelGravedad->nombre,
         ]);
     }
 
@@ -68,8 +76,8 @@ class NivelGravedadController extends Controller
         return redirect()->route('niveles-gravedad.index')->with([
             'ok'      => 'enabled',
             'message' => "Se acaba de deshabilitar el registro de {$nivelGravedad->nombre}",
-            'alert'   => 'danger',
-            'data'    => $nivelGravedad->nombre,
+            'alert' => 'danger',
+            'data'  => $nivelGravedad->nombre,
         ]);
     }
 
@@ -81,8 +89,8 @@ class NivelGravedadController extends Controller
         return redirect()->route('niveles-gravedad.index')->with([
             'ok'      => 'enabled',
             'message' => "Se acaba de habilitar el registro de {$nivelGravedad->nombre}",
-            'alert'   => 'primary',
-            'data'    => $nivelGravedad->nombre,
+            'alert' => 'primary',
+            'data'  => $nivelGravedad->nombre,
         ]);
     }
 }

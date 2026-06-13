@@ -19,7 +19,7 @@
     </svg>
 
     {{-- Alertas de Éxito, Advertencia o Información --}}
-    @if(session('message'))
+    @if (session('message'))
         @php
             $status = session('status', 'info');
             $alertClass = 'alert-info';
@@ -80,13 +80,15 @@
                     <div class="header-title">
                         <h4 class="card-title">Lista de Niveles de Gravedad</h4>
                     </div>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createNivelModal">
-                        <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                        </svg>
-                        Añadir Nivel de Gravedad
-                    </button>
+                    @can('niveles.create')
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createNivelModal">
+                            <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                            Añadir Nivel de Gravedad
+                        </button>
+                    @endcan
                 </div>
                 <div class="card-body px-0">
                     <div class="table-responsive">
@@ -102,10 +104,11 @@
                             <tbody>
                                 @forelse($niveles as $nivel)
                                     <tr>
-                                        <td class="text-center"><span class="badge bg-dark">#{{ $nivel->nivel_id }}</span></td>
+                                        <td class="text-center"><span class="badge bg-dark">#{{ $nivel->nivel_id }}</span>
+                                        </td>
                                         <td>{{ $nivel->nombre }}</td>
                                         <td>
-                                            @if($nivel->estado == 1)
+                                            @if ($nivel->estado == 1)
                                                 <span class="badge bg-success">Activo</span>
                                             @else
                                                 <span class="badge bg-danger">Inactivo</span>
@@ -113,61 +116,65 @@
                                         </td>
                                         <td>
                                             <div class="flex align-items-center list-user-action">
-                                                <button class="btn btn-sm btn-icon btn-warning" data-bs-toggle="modal"
-                                                    data-bs-target="#editNivelModal{{ $nivel->nivel_id }}" title="Editar">
-                                                    <span class="btn-inner">
-                                                        <svg width="20" viewBox="0 0 24 24" fill="none"
-                                                            xmlns="http://www.w3.org/2000/svg">
-                                                            <path
-                                                                d="M11.4925 2.78906H7.75349C4.67849 2.78906 2.75049 4.96606 2.75049 8.04806V16.3621C2.75049 19.4441 4.66949 21.6211 7.75349 21.6211H16.5775C19.6625 21.6211 21.5815 19.4441 21.5815 16.3621V12.3341"
-                                                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                                                stroke-linejoin="round"></path>
-                                                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                                                d="M8.82812 10.921L16.3011 3.44799C17.2321 2.51799 18.7411 2.51799 19.6721 3.44799L20.8891 4.66499C21.8201 5.59599 21.8201 7.10599 20.8891 8.03599L13.3801 15.545C12.9731 15.952 12.4211 16.181 11.8451 16.181H8.09912L8.19312 12.401C8.20712 11.845 8.43412 11.315 8.82812 10.921Z"
-                                                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                                                stroke-linejoin="round"></path>
-                                                            <path d="M15.1655 4.60254L19.7315 9.16854" stroke="currentColor"
-                                                                stroke-width="1.5" stroke-linecap="round"
-                                                                stroke-linejoin="round"></path>
-                                                        </svg>
-                                                    </span>
-                                                </button>
+                                                @can('niveles.edit')
+                                                    <button class="btn btn-sm btn-icon btn-warning" data-bs-toggle="modal"
+                                                        data-bs-target="#editNivelModal{{ $nivel->nivel_id }}" title="Editar">
+                                                        <span class="btn-inner">
+                                                            <svg width="20" viewBox="0 0 24 24" fill="none"
+                                                                xmlns="http://www.w3.org/2000/svg">
+                                                                <path
+                                                                    d="M11.4925 2.78906H7.75349C4.67849 2.78906 2.75049 4.96606 2.75049 8.04806V16.3621C2.75049 19.4441 4.66949 21.6211 7.75349 21.6211H16.5775C19.6625 21.6211 21.5815 19.4441 21.5815 16.3621V12.3341"
+                                                                    stroke="currentColor" stroke-width="1.5"
+                                                                    stroke-linecap="round" stroke-linejoin="round"></path>
+                                                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                                                    d="M8.82812 10.921L16.3011 3.44799C17.2321 2.51799 18.7411 2.51799 19.6721 3.44799L20.8891 4.66499C21.8201 5.59599 21.8201 7.10599 20.8891 8.03599L13.3801 15.545C12.9731 15.952 12.4211 16.181 11.8451 16.181H8.09912L8.19312 12.401C8.20712 11.845 8.43412 11.315 8.82812 10.921Z"
+                                                                    stroke="currentColor" stroke-width="1.5"
+                                                                    stroke-linecap="round" stroke-linejoin="round"></path>
+                                                                <path d="M15.1655 4.60254L19.7315 9.16854" stroke="currentColor"
+                                                                    stroke-width="1.5" stroke-linecap="round"
+                                                                    stroke-linejoin="round"></path>
+                                                            </svg>
+                                                        </span>
+                                                    </button>
+                                                @endcan
 
-                                                @if($nivel->estado == 1)
+                                                @if ($nivel->estado == 1)
                                                     <button type="button" class="btn btn-sm btn-icon btn-danger"
                                                         data-bs-toggle="modal"
-                                                        data-bs-target="#deleteNivelModal{{ $nivel->nivel_id }}" title="Desactivar">
+                                                        data-bs-target="#deleteNivelModal{{ $nivel->nivel_id }}"
+                                                        title="Desactivar">
                                                         <span class="btn-inner">
                                                             <svg width="20" viewBox="0 0 24 24" fill="none"
                                                                 xmlns="http://www.w3.org/2000/svg" stroke="currentColor">
                                                                 <path
                                                                     d="M19.3248 9.46826C19.3248 9.46826 18.7818 16.2033 18.4668 19.0403C18.3168 20.3953 17.4798 21.1893 16.1088 21.2143C13.4998 21.2613 10.8878 21.2643 8.27979 21.2093C6.96079 21.1823 6.13779 20.3783 5.99079 19.0473C5.67379 16.1853 5.13379 9.46826 5.13379 9.46826"
-                                                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                                                    stroke-linejoin="round"></path>
+                                                                    stroke="currentColor" stroke-width="1.5"
+                                                                    stroke-linecap="round" stroke-linejoin="round"></path>
                                                                 <path d="M20.708 6.23975H3.75" stroke="currentColor"
                                                                     stroke-width="1.5" stroke-linecap="round"
                                                                     stroke-linejoin="round"></path>
                                                                 <path
                                                                     d="M17.4406 6.23973C16.6556 6.23973 15.9796 5.68473 15.8256 4.91573L15.5826 3.69973C15.4326 3.13873 14.9246 2.75073 14.3456 2.75073H10.1126C9.53358 2.75073 9.02558 3.13873 8.87558 3.69973L8.63258 4.91573C8.47858 5.68473 7.80258 6.23973 7.01758 6.23973"
-                                                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                                                    stroke-linejoin="round"></path>
+                                                                    stroke="currentColor" stroke-width="1.5"
+                                                                    stroke-linecap="round" stroke-linejoin="round"></path>
                                                             </svg>
                                                         </span>
                                                     </button>
                                                 @else
                                                     <button type="button" class="btn btn-sm btn-icon btn-success"
                                                         data-bs-toggle="modal"
-                                                        data-bs-target="#activateNivelModal{{ $nivel->nivel_id }}" title="Activar">
+                                                        data-bs-target="#activateNivelModal{{ $nivel->nivel_id }}"
+                                                        title="Activar">
                                                         <span class="btn-inner">
                                                             <svg width="20" viewBox="0 0 24 24" fill="none"
                                                                 xmlns="http://www.w3.org/2000/svg">
                                                                 <path fill-rule="evenodd" clip-rule="evenodd"
                                                                     d="M16.3345 2.75024H7.66549C4.64449 2.75024 2.75049 4.88924 2.75049 7.91624V16.0842C2.75049 19.1112 4.63549 21.2502 7.66549 21.2502H16.3335C19.3645 21.2502 21.2505 19.1112 21.2505 16.0842V7.91624C21.2505 4.88924 19.3645 2.75024 16.3345 2.75024Z"
-                                                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                                                    stroke-linejoin="round"></path>
+                                                                    stroke="currentColor" stroke-width="1.5"
+                                                                    stroke-linecap="round" stroke-linejoin="round"></path>
                                                                 <path d="M8.43994 12.0002L10.8139 14.3732L15.5599 9.6272"
-                                                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                                                    stroke-linejoin="round"></path>
+                                                                    stroke="currentColor" stroke-width="1.5"
+                                                                    stroke-linecap="round" stroke-linejoin="round"></path>
                                                             </svg>
                                                         </span>
                                                     </button>
@@ -186,7 +193,8 @@
                                                     @csrf
                                                     @method('PUT')
                                                     <div class="modal-header">
-                                                        <h5 class="modal-title">Editar Nivel de Gravedad: {{ $nivel->nombre }}
+                                                        <h5 class="modal-title">Editar Nivel de Gravedad:
+                                                            {{ $nivel->nombre }}
                                                         </h5>
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                             aria-label="Close"></button>
@@ -202,8 +210,9 @@
                                                             <div class="col-md-12 form-group">
                                                                 <div class="form-check form-switch mt-2">
                                                                     <input class="form-check-input" type="checkbox"
-                                                                        id="estadoEdit{{ $nivel->nivel_id }}" name="estado"
-                                                                        value="1" {{ $nivel->estado == 1 ? 'checked' : '' }}>
+                                                                        id="estadoEdit{{ $nivel->nivel_id }}"
+                                                                        name="estado" value="1"
+                                                                        {{ $nivel->estado == 1 ? 'checked' : '' }}>
                                                                     <label class="form-check-label"
                                                                         for="estadoEdit{{ $nivel->nivel_id }}">Activo</label>
                                                                 </div>
@@ -213,7 +222,8 @@
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-secondary"
                                                             data-bs-dismiss="modal">Cerrar</button>
-                                                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                                        <button type="submit" class="btn btn-primary">Guardar
+                                                            Cambios</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -237,11 +247,13 @@
                                                     <div class="modal-body">
                                                         <div class="alert alert-warning d-flex align-items-center mb-0"
                                                             role="alert">
-                                                            <svg class="bi flex-shrink-0 me-2" width="24" height="24">
+                                                            <svg class="bi flex-shrink-0 me-2" width="24"
+                                                                height="24">
                                                                 <use xlink:href="#exclamation-triangle-fill" />
                                                             </svg>
                                                             <div>
-                                                                ¿Estás seguro que deseas <strong>desactivar</strong> el nivel
+                                                                ¿Estás seguro que deseas <strong>desactivar</strong> el
+                                                                nivel
                                                                 <strong>{{ $nivel->nombre }}</strong>?
                                                             </div>
                                                         </div>
@@ -249,7 +261,8 @@
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-secondary"
                                                             data-bs-dismiss="modal">Cancelar</button>
-                                                        <button type="submit" class="btn btn-danger">Sí, Desactivar</button>
+                                                        <button type="submit" class="btn btn-danger">Sí,
+                                                            Desactivar</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -273,7 +286,8 @@
                                                     <div class="modal-body">
                                                         <div class="alert alert-info d-flex align-items-center mb-0"
                                                             role="alert">
-                                                            <svg class="bi flex-shrink-0 me-2" width="24" height="24">
+                                                            <svg class="bi flex-shrink-0 me-2" width="24"
+                                                                height="24">
                                                                 <use xlink:href="#info-fill" />
                                                             </svg>
                                                             <div>
@@ -285,7 +299,8 @@
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-secondary"
                                                             data-bs-dismiss="modal">Cancelar</button>
-                                                        <button type="submit" class="btn btn-success">Sí, Activar</button>
+                                                        <button type="submit" class="btn btn-success">Sí,
+                                                            Activar</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -309,7 +324,8 @@
     </div>
 
     <!-- Create Modal -->
-    <div class="modal fade" id="createNivelModal" tabindex="-1" aria-labelledby="createNivelModalLabel" aria-hidden="true">
+    <div class="modal fade" id="createNivelModal" tabindex="-1" aria-labelledby="createNivelModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <form action="{{ route('niveles-gravedad.store') }}" method="POST">
@@ -322,12 +338,13 @@
                         <div class="row">
                             <div class="col-md-12 form-group">
                                 <label class="form-label">Nombre del Nivel <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="nombre" value="{{ old('nombre') }}" required>
+                                <input type="text" class="form-control" name="nombre" value="{{ old('nombre') }}"
+                                    required>
                             </div>
                             <div class="col-md-12 form-group">
                                 <div class="form-check form-switch mt-2">
-                                    <input class="form-check-input" type="checkbox" id="estado" name="estado" value="1"
-                                        checked>
+                                    <input class="form-check-input" type="checkbox" id="estado" name="estado"
+                                        value="1" checked>
                                     <label class="form-check-label" for="estado">Activo</label>
                                 </div>
                             </div>

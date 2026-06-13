@@ -1,13 +1,13 @@
-# Dependencias del Servidor de Inferencia (FastAPI & TensorFlow)
-# Versiones congeladas y validadas para compatibilidad con Python 3.11.9 en este sistema
+    # Dependencias del Servidor de Inferencia (FastAPI & TensorFlow)
+    # Versiones congeladas y validadas para compatibilidad con Python 3.11.9 en este sistema
 
-numpy==1.26.4
-scipy==1.16.3
-tensorflow==2.15.0
-h5py==3.15.1
-opencv-python==4.11.0.86
-pdf2image==1.17.0
-matplotlib==3.10.7
-fastapi==0.115.12
-uvicorn==0.34.2
-python-multipart==0.0.20
+    numpy==1.26.4
+    scipy==1.16.3
+    tensorflow==2.15.0
+    h5py==3.15.1
+    opencv-python==4.11.0.86
+    pdf2image==1.17.0
+    matplotlib==3.10.7
+    fastapi==0.115.12
+    uvicorn==0.34.2
+    python-multipart==0.0.20
