@@ -12,11 +12,20 @@ class PacienteController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Paciente::with('prefijoPaciente');
+        $query = Paciente::with(['prefijoPaciente', 'registradoPor'])
+            ->withCount('estudios');
 
-        if ($request->has('search')) {
-            $searchTerm = $request->input('search');
-            $query->where('codigo_generado', 'like', '%' . $searchTerm . '%');
+        if ($request->filled('search')) {
+            $searchTerm = trim($request->input('search'));
+            $sexoMap = ['masculino' => 'M', 'femenino' => 'F', 'm' => 'M', 'f' => 'F'];
+            $sexoBusqueda = $sexoMap[strtolower($searchTerm)] ?? null;
+
+            $query->where(function ($q) use ($searchTerm, $sexoBusqueda) {
+                $q->where('codigo_generado', 'like', '%' . $searchTerm . '%');
+                if ($sexoBusqueda) {
+                    $q->orWhere('sexo', $sexoBusqueda);
+                }
+            });
         }
 
         $pacientes = $query->orderBy('paciente_id', 'desc')->paginate(10);
@@ -25,6 +34,12 @@ class PacienteController extends Controller
         $pacientes->appends(['search' => $request->input('search')]);
 
         return view('pacientes.index', compact('pacientes', 'prefijos'));
+    }
+
+    public function show(Paciente $paciente)
+    {
+        $paciente->loadCount('estudios');
+        return view('pacientes.show', compact('paciente'));
     }
 
     public function store(Request $request)
@@ -36,11 +51,10 @@ class PacienteController extends Controller
             'peso'             => 'nullable|numeric|min:0|max:300',
         ]);
 
-        // Generar código anónimo: PREFIJO-AÑO-CORRELATIVO
         $prefijo  = PrefijoPaciente::find($request->prefijo_id);
-        $anio     = now()->year;
-        $ultimo   = Paciente::whereYear('created_at', $anio)->count() + 1;
-        $codigo   = strtoupper($prefijo->nombre) . '-' . $anio . '-' . str_pad($ultimo, 3, '0', STR_PAD_LEFT);
+        $hoy      = date('Y-m-d');
+        $ultimo   = Paciente::whereDate('created_at', $hoy)->count() + 1;
+        $codigo   = strtoupper($prefijo->nombre) . '_' . date('Ymd') . '_' . str_pad($ultimo, 3, '0', STR_PAD_LEFT);
 
         $paciente = new Paciente();
         $paciente->prefijo_id       = $request->prefijo_id;

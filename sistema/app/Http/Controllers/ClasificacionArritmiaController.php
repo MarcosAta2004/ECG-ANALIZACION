@@ -12,8 +12,8 @@ class ClasificacionArritmiaController extends Controller
     {
         $query = ClasificacionArritmia::query();
 
-        if ($request->has('search')) {
-            $searchTerm = $request->input('search');
+        if ($request->filled('search')) {
+            $searchTerm = trim($request->input('search'));
             $query->where('nombre', 'like', '%' . $searchTerm . '%');
         }
 

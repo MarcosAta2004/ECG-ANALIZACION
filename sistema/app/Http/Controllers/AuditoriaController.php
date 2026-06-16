@@ -30,6 +30,8 @@ class AuditoriaController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('descripcion', 'like', '%' . $search . '%')
+                  ->orWhere('accion', 'like', '%' . $search . '%')
+                  ->orWhere('modulo', 'like', '%' . $search . '%')
                   ->orWhere('entidad', 'like', '%' . $search . '%')
                   ->orWhere('entidad_id', 'like', '%' . $search . '%')
                   ->orWhereHas('usuario', function ($u) use ($search) {
@@ -63,19 +65,19 @@ class AuditoriaController extends Controller
             $query->whereDate('created_at', '<=', $validated['hasta']);
         }
 
-        $auditorias = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
+        $auditorias = $query->orderByDesc('created_at')->paginate(10)->withQueryString();
 
         // Listas para los selects del filtro
         $usuarios = User::orderBy('apellido_paterno')->get(['id', 'nombres', 'apellido_paterno', 'apellido_materno']);
-        $modulos  = Auditoria::select('modulo')->distinct()->orderBy('modulo')->pluck('modulo');
-        $acciones = Auditoria::select('accion')->distinct()->orderBy('accion')->pluck('accion');
+        $modulos  = Auditoria::whereNotNull('modulo')->select('modulo')->distinct()->orderBy('modulo')->pluck('modulo');
+        $acciones = Auditoria::whereNotNull('accion')->select('accion')->distinct()->orderBy('accion')->pluck('accion');
 
         // Estadísticas del panel superior — módulos en español según tu esquema
-        $stats = [
+        $auditoriaStats = [
             'total'        => Auditoria::count(),
             'hoy'          => Auditoria::whereDate('created_at', today())->count(),
-            'usuarios'     => Auditoria::where('modulo', 'usuarios')->count(),
-            'clinico'      => Auditoria::whereIn('modulo', ['estudios', 'predicciones', 'diagnosticos', 'reportes'])->count(),
+            'criticas'     => Auditoria::where('severidad', 'CRITICA')->count(),
+            'validaciones' => Auditoria::where('razon_cambio', 'VALIDACION_MEDICA')->count(),
         ];
 
         // Filtros activos para repintar el formulario
@@ -88,6 +90,6 @@ class AuditoriaController extends Controller
             'hasta'   => $validated['hasta']   ?? '',
         ];
 
-        return view('auditoria.index', compact('auditorias', 'usuarios', 'modulos', 'acciones', 'stats', 'filters'));
+        return view('auditoria.index', compact('auditorias', 'usuarios', 'modulos', 'acciones', 'auditoriaStats', 'filters'));
     }
 }

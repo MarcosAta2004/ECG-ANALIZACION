@@ -51,14 +51,14 @@ class UserController extends Controller
         $rolesActivos = Role::all();
         $tiposDoc    = TipoDocumentoIdentidad::all();
 
-        $stats = [
+        $userStats = [
             'usuarios' => User::count(),
             'activos'  => User::where('estado', 1)->count(),
             'inactivos'=> User::where('estado', 0)->count(),
             'roles'    => Role::count(),
         ];
 
-        return view('seguridad.users.index', compact('usuarios', 'roles', 'rolesActivos', 'tiposDoc', 'filters', 'stats'));
+        return view('seguridad.users.index', compact('usuarios', 'roles', 'rolesActivos', 'tiposDoc', 'filters', 'userStats'));
     }
 
     public function store(Request $request)

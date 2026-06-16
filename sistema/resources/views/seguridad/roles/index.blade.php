@@ -1,4 +1,4 @@
-@extends('dashboard.index')
+﻿@extends('dashboard.index')
 
 @section('content')
 
@@ -18,7 +18,7 @@
         </symbol>
     </svg>
 
-    {{-- Alertas de Éxito, Advertencia o Información --}}
+    {{-- Alertas de Ã‰xito, Advertencia o InformaciÃ³n --}}
     @if (session('message'))
         @php
             $status = session('alert', 'info');
@@ -50,7 +50,7 @@
         </div>
     @endif
 
-    {{-- Alertas de Errores de Validación --}}
+    {{-- Alertas de Errores de ValidaciÃ³n --}}
     @if ($errors->any())
         <div class="bd-example mb-3">
             <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
@@ -58,7 +58,7 @@
                     <use xlink:href="#exclamation-triangle-fill" />
                 </svg>
                 <div>
-                    <strong>¡Hubo un problema!</strong> Revisa los siguientes errores de validación:<br>
+                    <strong>Hubo un problema!</strong> Revisa los siguientes errores de validacion:<br>
                     <ul class="mb-0 mt-1">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -70,13 +70,14 @@
         </div>
     @endif
 
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div class="header-title">
-                        <h4 class="card-title">Lista de Roles</h4>
-                    </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="header-title">
+                                    <h4 class="card-title">Lista de Roles</h4>
+                                </div>
+                    @can('roles.store')
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRoleModal">
                         <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -84,6 +85,7 @@
                         </svg>
                         Añadir Rol
                     </button>
+                @endcan
                 </div>
                 <div class="card-body px-0">
                     <div class="table-responsive">
@@ -102,18 +104,18 @@
                                         <td class="text-center"><span class="badge bg-dark">#{{ $role->id }}</span></td>
                                         <td>{{ $role->name }}</td>
                                         <td>
-                                            <div class="d-flex flex-wrap gap-1">
-                                                @foreach ($role->permissions as $permiso)
-                                                    <span class="badge bg-secondary">{{ $permiso->name }}</span>
-                                                @endforeach
-                                                @if ($role->permissions->count() == 0)
-                                                    <span class="text-muted small">Sin permisos</span>
-                                                @endif
-                                            </div>
+                                            @php $totalPermisos = $role->permissions->count(); @endphp
+                                            @if ($totalPermisos > 0)
+                                                <span class="badge bg-primary rounded-pill fs-6 px-3 py-2">{{ $totalPermisos }}</span>
+                                                <span class="text-muted small ms-2">permisos asignados</span>
+                                            @else
+                                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Sin permisos</span>
+                                            @endif
                                         </td>
                                         <td>
                                             <div class="flex align-items-center list-user-action">
-                                                <button class="btn btn-sm btn-icon btn-warning" data-bs-toggle="modal"
+                                                @can('roles.update')
+                                                    <button class="btn btn-sm btn-icon btn-warning" data-bs-toggle="modal"
                                                     data-bs-target="#editRoleModal{{ $role->id }}" title="Editar">
                                                     <span class="btn-inner">
                                                         <svg width="20" viewBox="0 0 24 24" fill="none"
@@ -132,6 +134,7 @@
                                                         </svg>
                                                     </span>
                                                 </button>
+                                                @endcan
 
                                                 <button type="button" class="btn btn-sm btn-icon btn-danger"
                                                     data-bs-toggle="modal"
@@ -179,24 +182,70 @@
                                                                     value="{{ $role->name }}" required>
                                                             </div>
                                                             <div class="col-md-12 form-group mt-2">
-                                                                <label class="form-label mb-2">Permisos <span
-                                                                        class="text-danger">*</span></label>
-                                                                <div class="row px-3">
-                                                                    @foreach ($permisos as $permiso)
-                                                                        <div class="col-md-4 mb-2">
-                                                                            <div class="form-check d-block">
-                                                                                <input class="form-check-input"
-                                                                                    type="checkbox" name="permissions[]"
-                                                                                    value="{{ $permiso->id }}"
-                                                                                    id="permEdit{{ $role->id }}_{{ $permiso->id }}"
-                                                                                    {{ $role->hasPermissionTo($permiso->name) ? 'checked' : '' }}>
-                                                                                <label class="form-check-label"
-                                                                                    for="permEdit{{ $role->id }}_{{ $permiso->id }}">
-                                                                                    {{ $permiso->name }}
-                                                                                </label>
-                                                                            </div>
+                                                                <label class="form-label mb-2">Permisos <span class="text-danger">*</span></label>
+                                                                
+                                                                <div class="row bg-white p-3 rounded border">
+                                                                    <div class="col-12 mb-3 pb-2 border-bottom">
+                                                                        <div class="form-check custom-checkbox">
+                                                                            <input type="checkbox" class="form-check-input select-all-btn" id="selectAllEdit{{ $role->id }}">
+                                                                            <label class="form-check-label fw-bold" for="selectAllEdit{{ $role->id }}">Seleccionar todos los permisos</label>
                                                                         </div>
-                                                                    @endforeach
+                                                                    </div>
+                                                                    
+                                                                    @php
+                                                                        $groupedPermisos = $permisos->groupBy(function($item) {
+                                                                            return explode('.', $item->name)[0];
+                                                                        })->sortKeys();
+                                                                    @endphp
+
+                                                                    <div class="row px-0 mx-0 permissions-container">
+                                                                        @foreach($groupedPermisos as $modulo => $perms)
+                                                                            <div class="col-md-6 mb-3">
+                                                                                <div class="card h-100 shadow-none border" style="background-color: #f1f5f9; border-radius: 6px;">
+                                                                                    <div class="card-body p-3">
+                                                                                        <div class="form-check custom-checkbox mb-2">
+                                                                                            <input type="checkbox" class="form-check-input module-checkbox" id="mod_edit_{{ $role->id }}_{{ $modulo }}">
+                                                                                            <label class="form-check-label fw-bold text-uppercase" for="mod_edit_{{ $role->id }}_{{ $modulo }}">{{ str_replace('_', ' ', $modulo) }}</label>
+                                                                                        </div>
+                                                                                        <hr class="mt-1 mb-2" style="border-color: #cbd5e1; opacity: 1;">
+                                                                                        <div class="ms-1">
+                                                                                            @foreach($perms as $permiso)
+                                                                                                @php
+                                                                                                    $action = explode('.', $permiso->name)[1] ?? $permiso->name;
+                                                                                                    $tl = [
+                                                                                                        'store' => 'Registrar',
+                                                                                                        'create' => 'Registrar',
+                                                                                                        'destroy' => 'Eliminar',
+                                                                                                        'edit' => 'Editar',
+                                                                                                        'update' => 'Editar',
+                                                                                                        'index' => 'Lista de',
+                                                                                                        'show' => 'Ver Datos de',
+                                                                                                        'activar' => 'Activar',
+                                                                                                        'analyze' => 'Analizar',
+                                                                                                        'review' => 'Validar',
+                                                                                                        'download' => 'Descargar',
+                                                                                                    ];
+                                                                                                    $actionLabel = $tl[$action] ?? ucfirst($action);
+                                                                                                    $finalLabel = $actionLabel . ' ' . str_replace('_', ' ', $modulo);
+                                                                                                @endphp
+                                                                                                <div class="form-check custom-checkbox mb-1">
+                                                                                                    <input type="checkbox" 
+                                                                                                           class="form-check-input perm-checkbox mod-edit-child-{{ $role->id }}-{{ $modulo }}" 
+                                                                                                           name="permissions[]" 
+                                                                                                           value="{{ $permiso->id }}" 
+                                                                                                           id="permEdit{{ $role->id }}_{{ $permiso->id }}"
+                                                                                                           {{ $role->hasPermissionTo($permiso->name) ? 'checked' : '' }}>
+                                                                                                    <label class="form-check-label" style="font-size: 0.85rem;" for="permEdit{{ $role->id }}_{{ $permiso->id }}">
+                                                                                                        {{ $finalLabel }}
+                                                                                                    </label>
+                                                                                                </div>
+                                                                                            @endforeach
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        @endforeach
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -221,7 +270,7 @@
                                                     @csrf
                                                     @method('DELETE')
                                                     <div class="modal-header">
-                                                        <h5 class="modal-title">Confirmar Eliminación</h5>
+                                                        <h5 class="modal-title">Confirmar EliminaciÃ³n</h5>
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                             aria-label="Close"></button>
                                                     </div>
@@ -233,8 +282,8 @@
                                                                 <use xlink:href="#exclamation-triangle-fill" />
                                                             </svg>
                                                             <div>
-                                                                ¿Estás seguro que deseas <strong>eliminar</strong> el rol
-                                                                <strong>{{ $role->name }}</strong>? Esta acción no se
+                                                                Â¿EstÃ¡s seguro que deseas <strong>eliminar</strong> el rol
+                                                                <strong>{{ $role->name }}</strong>? Esta acciÃ³n no se
                                                                 puede deshacer.
                                                             </div>
                                                         </div>
@@ -242,7 +291,7 @@
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-secondary"
                                                             data-bs-dismiss="modal">Cancelar</button>
-                                                        <button type="submit" class="btn btn-danger">Sí,
+                                                        <button type="submit" class="btn btn-danger">SÃ­,
                                                             Eliminar</button>
                                                     </div>
                                                 </form>
@@ -270,7 +319,7 @@
                 <form action="{{ route('roles.store') }}" method="POST">
                     @csrf
                     <div class="modal-header">
-                        <h5 class="modal-title">Añadir Nuevo Rol</h5>
+                        <h5 class="modal-title">AÃ±adir Nuevo Rol</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -282,19 +331,69 @@
                             </div>
                             <div class="col-md-12 form-group mt-2">
                                 <label class="form-label mb-2">Permisos <span class="text-danger">*</span></label>
-                                <div class="row px-3">
-                                    @foreach ($permisos as $permiso)
-                                        <div class="col-md-4 mb-2">
-                                            <div class="form-check d-block">
-                                                <input class="form-check-input" type="checkbox" name="permissions[]"
-                                                    value="{{ $permiso->name }}" id="permCreate{{ $permiso->id }}"
-                                                    {{ is_array(old('permissions')) && in_array($permiso->name, old('permissions')) ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="permCreate{{ $permiso->id }}">
-                                                    {{ $permiso->name }}
-                                                </label>
-                                            </div>
+                                
+                                <div class="row bg-white p-3 rounded border">
+                                    <div class="col-12 mb-3 pb-2 border-bottom">
+                                        <div class="form-check custom-checkbox">
+                                            <input type="checkbox" class="form-check-input select-all-btn" id="selectAllCreate">
+                                            <label class="form-check-label fw-bold" for="selectAllCreate">Seleccionar todos los permisos</label>
                                         </div>
-                                    @endforeach
+                                    </div>
+                                    
+                                    @php
+                                        $groupedPermisos = $permisos->groupBy(function($item) {
+                                            return explode('.', $item->name)[0];
+                                        })->sortKeys();
+                                    @endphp
+
+                                    <div class="row px-0 mx-0 permissions-container">
+                                        @foreach($groupedPermisos as $modulo => $perms)
+                                            <div class="col-md-6 mb-3">
+                                                <div class="card h-100 shadow-none border" style="background-color: #f1f5f9; border-radius: 6px;">
+                                                    <div class="card-body p-3">
+                                                        <div class="form-check custom-checkbox mb-2">
+                                                            <input type="checkbox" class="form-check-input module-checkbox" id="mod_create_{{ $modulo }}">
+                                                            <label class="form-check-label fw-bold text-uppercase" for="mod_create_{{ $modulo }}">{{ str_replace('_', ' ', $modulo) }}</label>
+                                                        </div>
+                                                        <hr class="mt-1 mb-2" style="border-color: #cbd5e1; opacity: 1;">
+                                                        <div class="ms-1">
+                                                            @foreach($perms as $permiso)
+                                                                @php
+                                                                    $action = explode('.', $permiso->name)[1] ?? $permiso->name;
+                                                                    $tl = [
+                                                                        'store' => 'Registrar',
+                                                                        'create' => 'Registrar',
+                                                                        'destroy' => 'Eliminar',
+                                                                        'edit' => 'Editar',
+                                                                        'update' => 'Editar',
+                                                                        'index' => 'Lista de',
+                                                                        'show' => 'Ver Datos de',
+                                                                        'activar' => 'Activar',
+                                                                        'analyze' => 'Analizar',
+                                                                        'review' => 'Validar',
+                                                                        'download' => 'Descargar',
+                                                                    ];
+                                                                    $actionLabel = $tl[$action] ?? ucfirst($action);
+                                                                    $finalLabel = $actionLabel . ' ' . str_replace('_', ' ', $modulo);
+                                                                @endphp
+                                                                <div class="form-check custom-checkbox mb-1">
+                                                                    <input type="checkbox" 
+                                                                           class="form-check-input perm-checkbox mod-create-child-{{ $modulo }}" 
+                                                                           name="permissions[]" 
+                                                                           value="{{ $permiso->name }}" 
+                                                                           id="permCreate_{{ $permiso->id }}"
+                                                                           {{ is_array(old('permissions')) && in_array($permiso->name, old('permissions')) ? 'checked' : '' }}>
+                                                                    <label class="form-check-label" style="font-size: 0.85rem;" for="permCreate_{{ $permiso->id }}">
+                                                                        {{ $finalLabel }}
+                                                                    </label>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -308,4 +407,130 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Manejar cada modal de manera independiente
+            document.querySelectorAll('form').forEach(form => {
+                const selectAllBtn = form.querySelector('.select-all-btn');
+                if(!selectAllBtn) return;
+
+                const modCheckboxes = form.querySelectorAll('.module-checkbox');
+                const permCheckboxes = form.querySelectorAll('.perm-checkbox');
+
+                // 1. Check/Uncheck ALL en toda la ventana
+                selectAllBtn.addEventListener('change', function() {
+                    permCheckboxes.forEach(cb => cb.checked = this.checked);
+                    modCheckboxes.forEach(cb => {
+                        cb.checked = this.checked;
+                        cb.indeterminate = false;
+                    });
+                });
+
+                // 2. Check/Uncheck a nivel de mÃ³dulo
+                modCheckboxes.forEach(modBtn => {
+                    modBtn.addEventListener('change', function() {
+                        // Buscar el nombre del mÃ³dulo en el ID
+                        const isEdit = this.id.startsWith('mod_edit_');
+                        
+                        let childClassPrefix = isEdit ? 'mod-edit-child-' : 'mod-create-child-';
+                        let moduleName = '';
+                        
+                        if(isEdit) {
+                            moduleName = this.id.replace('mod_edit_', '').replace(/_/g, '-'); // role_id y_modulo 
+                            // Ojo: id es mod_edit_{role_id}_{modulo}
+                            // Las clases son mod-edit-child-{role_id}-{modulo}
+                            let idParts = this.id.split('_');
+                            let rID = idParts[2];
+                            let mName = idParts.slice(3).join('_');
+                            childClassPrefix += rID + '-' + mName;
+                        } else {
+                            let mName = this.id.replace('mod_create_', '');
+                            childClassPrefix += mName;
+                        }
+
+                        form.querySelectorAll('.' + childClassPrefix).forEach(cb => {
+                            cb.checked = this.checked;
+                        });
+                        
+                        updateGlobalCheckbox();
+                    });
+                });
+
+                // 3. Cuando se hace check en un permiso individual
+                permCheckboxes.forEach(permBtn => {
+                    permBtn.addEventListener('change', function() {
+                        // Encontrar el mÃ³dulo padre
+                        let moduleClass = '';
+                        this.classList.forEach(cls => {
+                            if(cls.startsWith('mod-create-child-') || cls.startsWith('mod-edit-child-')) {
+                                moduleClass = cls;
+                            }
+                        });
+
+                        if(moduleClass) {
+                            // reconstruir el id del checkbox del mÃ³dulo
+                        let modId = '';
+                            if(moduleClass.startsWith('mod-create-child-')) {
+                                modId = 'mod_create_' + moduleClass.replace('mod-create-child-', '');
+                            } else {
+                                // mod-edit-child-{role_id}-{modulo}
+                                let parts = moduleClass.split('-');
+                                let rId = parts[3];
+                                let mName = parts.slice(4).join('-'); 
+                                modId = 'mod_edit_' + rId + '_' + mName;
+                            }
+                            
+                            const modCheckbox = form.querySelector('#' + modId);
+                            const allChildren = form.querySelectorAll('.' + moduleClass);
+                            const checkedChildren = form.querySelectorAll('.' + moduleClass + ':checked');
+                            
+                            if(modCheckbox) {
+                                modCheckbox.checked = (allChildren.length > 0 && allChildren.length === checkedChildren.length);
+                                modCheckbox.indeterminate = (checkedChildren.length > 0 && checkedChildren.length < allChildren.length);
+                            }
+                        }
+                        
+                        updateGlobalCheckbox();
+                    });
+                });
+
+                function updateGlobalCheckbox() {
+                    const allPerms = form.querySelectorAll('.perm-checkbox');
+                    const checkedPerms = form.querySelectorAll('.perm-checkbox:checked');
+                    
+                    if (allPerms.length > 0) {
+                        selectAllBtn.checked = (allPerms.length === checkedPerms.length);
+                        selectAllBtn.indeterminate = (checkedPerms.length > 0 && checkedPerms.length < allPerms.length);
+                    }
+                }
+                
+                // Inicializar estados al cargar la vista
+                modCheckboxes.forEach(modBtn => {
+                   let event = new Event('change');
+                   // En vez de disparar evento que cambiarÃ­a valores, simulamos comprobaciÃ³n interna
+                   let isEdit = modBtn.id.startsWith('mod_edit_');
+                   let childClassPrefix = isEdit ? 'mod-edit-child-' : 'mod-create-child-';
+                   if(isEdit) {
+                        let idParts = modBtn.id.split('_');
+                        let rID = idParts[2]; let mName = idParts.slice(3).join('_');
+                        childClassPrefix += rID + '-' + mName;
+                   } else {
+                        let mName = modBtn.id.replace('mod_create_', '');
+                        childClassPrefix += mName;
+                   }
+                   
+                   const allC = form.querySelectorAll('.' + childClassPrefix);
+                   const checkC = form.querySelectorAll('.' + childClassPrefix + ':checked');
+                   
+                   if(allC.length > 0) {
+                       modBtn.checked = (allC.length === checkC.length);
+                       modBtn.indeterminate = (checkC.length > 0 && checkC.length < allC.length);
+                   }
+                });
+                updateGlobalCheckbox();
+            });
+        });
+    </script>
+
 @endsection
+

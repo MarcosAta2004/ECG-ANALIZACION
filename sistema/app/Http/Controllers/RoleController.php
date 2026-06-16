@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleController extends Controller
 {
@@ -50,6 +51,7 @@ class RoleController extends Controller
         ]);
 
         $role->permissions()->attach($request->permissions);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()->route('roles.index')->with([
             'ok' => 'enabled',
@@ -108,6 +110,7 @@ class RoleController extends Controller
         ]);
 
         $role->permissions()->sync($request->permissions);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()->route('roles.index')->with([
             'ok' => 'enabled',
@@ -127,6 +130,8 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         $role->delete();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         return redirect()->route('roles.index')->with([
             'ok' => 'enabled',
             'alert' => 'success',

@@ -26,12 +26,12 @@ use App\Http\Controllers\PrefijoPacienteController;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () { 
+Route::get('/', function () {
     return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
-Route::get('/login', function () { 
-    return view('auth.login'); 
+Route::get('/login', function () {
+    return view('auth.login');
 })->name('login');
 
 Route::controller(LoginController::class)->group(function () {
@@ -58,7 +58,7 @@ Route::middleware(['auth'])->group(function () {
 
     // 2. MODULO SEGURIDAD
     Route::prefix('seguridad')->middleware(['rol:administrador'])->group(function () {
-        
+
         Route::controller(UserController::class)->prefix('usuarios')->group(function () {
             Route::get('/', 'index')->name('usuarios.index');
             Route::get('create', 'create')->name('usuarios.create');
@@ -67,7 +67,7 @@ Route::middleware(['auth'])->group(function () {
             Route::put('update/{usuario}', 'update')->name('usuarios.update');
             Route::delete('delete/{usuario}', 'destroy')->name('usuarios.destroy');
             Route::put('activar/{usuario}', 'activar')->name('usuarios.activar');
-            
+
             // Gestión de Roles por Usuario
             Route::get('{usuario}/roles', 'editrol')->name('usuarios.roles_edit');
             Route::put('{usuario}/roles', 'updaterol')->name('usuarios.roles_update');
@@ -98,15 +98,25 @@ Route::middleware(['auth'])->group(function () {
         Route::controller(PacienteController::class)->prefix('pacientes')->group(function () {
             Route::get('/', 'index')->name('pacientes.index');
             Route::post('store', 'store')->name('pacientes.store');
+            Route::get('show/{paciente}', 'show')->name('pacientes.show');
             Route::put('update/{paciente}', 'update')->name('pacientes.update');
             Route::delete('delete/{paciente}', 'destroy')->name('pacientes.destroy');
             Route::put('activar/{paciente}', 'activar')->name('pacientes.activar');
+        });
+
+        Route::controller(RitmoCardiacoController::class)->prefix('ritmos-cardiacos')->group(function () {
+            Route::get('/', 'index')->name('ritmos-cardiacos.index');
+            Route::post('store', 'store')->name('ritmos-cardiacos.store');
+            Route::put('update/{ritmoCardiaco}', 'update')->name('ritmos-cardiacos.update');
+            Route::delete('delete/{ritmoCardiaco}', 'destroy')->name('ritmos-cardiacos.destroy');
+            Route::put('activar/{ritmoCardiaco}', 'activar')->name('ritmos-cardiacos.activar');
         });
 
         Route::controller(EstudioController::class)->prefix('estudios')->group(function () {
             Route::get('/', 'index')->name('estudios.index');
             Route::post('store', 'store')->name('estudios.store');
             Route::put('update/{estudio}', 'update')->name('estudios.update');
+            Route::get('show/{estudio}', 'show')->name('estudios.show');
             Route::delete('delete/{estudio}', 'destroy')->name('estudios.destroy');
             Route::put('activar/{estudio}', 'activar')->name('estudios.activar');
             Route::get('{estudio}/observacion', 'showObservacion')->name('estudios.observacion');
@@ -115,12 +125,11 @@ Route::middleware(['auth'])->group(function () {
         Route::controller(ImagenController::class)->prefix('imagenes')->group(function () {
             Route::get('/', 'index')->name('imagenes.index');
             Route::post('store', 'store')->name('imagenes.store');
-            Route::put('update/{imagen}', 'update')->name('imagenes.update');
             Route::delete('delete/{imagen}', 'destroy')->name('imagenes.destroy');
             Route::put('activar/{imagen}', 'activar')->name('imagenes.activar');
             Route::get('{imagen}/ver-ecg', 'verEcg')->name('imagenes.ecg.ver');
             Route::get('{imagen}/descargar-ecg', 'descargarEcg')->name('imagenes.ecg.download');
-            
+
             // Procesamiento de IA
             Route::post('analyze', 'analyze')->name('imagenes.analyze');
             Route::post('{imagen}/ejecutar-analisis', 'analizar')->name('imagenes.analizar');
@@ -141,7 +150,7 @@ Route::middleware(['auth'])->group(function () {
 
             // AJAX: devuelve datos del estudio + ECG URL para el visor del modal
             Route::get('estudio/{estudio}/info', 'verEcgEstudio')->name('diagnosticos.estudio.info');
-            
+
             // Valoración rápida desde Historial (AJAX)
             Route::middleware(['rol:administrador,cardiologo'])->group(function () {
                 Route::post('{imagen}/review', 'review')->name('diagnosticos.review');
@@ -151,15 +160,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // 4. MODULO MANTENIMIENTOS
-    Route::prefix('mantenimientos')->middleware(['rol:administrador'])->group(function () {
-
-        Route::controller(RitmoCardiacoController::class)->prefix('ritmos-cardiacos')->group(function () {
-            Route::get('/', 'index')->name('ritmos-cardiacos.index');
-            Route::post('store', 'store')->name('ritmos-cardiacos.store');
-            Route::put('update/{ritmoCardiaco}', 'update')->name('ritmos-cardiacos.update');
-            Route::delete('delete/{ritmoCardiaco}', 'destroy')->name('ritmos-cardiacos.destroy');
-            Route::put('activar/{ritmoCardiaco}', 'activar')->name('ritmos-cardiacos.activar');
-        });
+    Route::prefix('mantenimientos')->middleware(['rol:administrador,cardiologo'])->group(function () {
 
         Route::controller(GrupoCardiacoController::class)->prefix('grupos-cardiacos')->group(function () {
             Route::get('/', 'index')->name('grupos-cardiacos.index');
@@ -203,10 +204,12 @@ Route::middleware(['auth'])->group(function () {
             Route::put('update/{reporte}', 'update')->name('reportes.update');
             Route::delete('delete/{reporte}', 'destroy')->name('reportes.destroy');
             Route::put('activar/{reporte}', 'activar')->name('reportes.activar');
+
+            // RUTAS PARA VER Y DESCARGAR EL REPORTE PDF DEL ESTUDIO
+            Route::get('estudio/{id}/pdf', 'verPDF')->name('reportes.verPDF');
+            Route::get('estudio/{id}/pdf/descargar', 'descargarPDF')->name('reportes.descargarPDF');
         });
     });
 
-    // RUTAS PARA VER Y DESCARGAR EL REPORTE PDF DEL ESTUDIO (PROTEGIDAS)
-    Route::get('reportes/estudio/{id}/pdf', [App\Http\Controllers\ReporteController::class, 'verPDF'])->name('reportes.estudio.pdf');
-    Route::get('reportes/estudio/{id}/pdf/descargar', [App\Http\Controllers\ReporteController::class, 'descargarPDF'])->name('reportes.estudio.pdf.download');
+    // (Puedes borrar las dos líneas sueltas que tenías al final)
 });

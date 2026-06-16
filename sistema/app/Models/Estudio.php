@@ -41,4 +41,9 @@ class Estudio extends Model
     {
         return $this->hasOne(Reporte::class, 'estudio_id', 'estudio_id');
     }
+
+    public function tieneDiagnosticoFinal(): bool
+    {
+        return $this->diagnostico()->exists();
+    }
 }

@@ -238,7 +238,7 @@
                     </div>
                 </div>
                 <div class="modal-footer bg-white border-top py-3">
-                    <button type="button" class="btn btn-light px-4 shadow-sm" data-bs-dismiss="modal">Ver Resumen</button>
+                    <a href="{{ route('predicciones.index') }}" class="btn btn-light px-4 shadow-sm">Ver Resumen</a>
                     <button type="button" class="btn btn-primary px-4 shadow d-flex align-items-center gap-2" 
                         @click="startNew()">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -315,6 +315,11 @@ window.ecgStudyAnalyzer = () => ({
         startNew() {
             let resM = bootstrap.Modal.getInstance(document.getElementById('resultModal'));
             if(resM) resM.hide();
+            
+            if (this.selectedEstudioId) {
+                this.estudios = this.estudios.filter(e => e.estudio_id != this.selectedEstudioId);
+            }
+            
             this.resetAll();
             setTimeout(() => {
                 let uploadM = new bootstrap.Modal(document.getElementById('uploadModal'));
@@ -350,7 +355,11 @@ window.ecgStudyAnalyzer = () => ({
                 const uploadData = await uploadResp.json();
                 
                 if (!uploadResp.ok) {
-                    throw new Error(uploadData.message || uploadData.error || 'Error al subir el archivo');
+                    let errMsg = uploadData.message || uploadData.error || 'Error al subir el archivo';
+                    if (uploadData.errors) {
+                        errMsg = Object.values(uploadData.errors)[0][0];
+                    }
+                    throw new Error(errMsg);
                 }
 
                 if (!uploadData.success || !uploadData.imagen_id) {

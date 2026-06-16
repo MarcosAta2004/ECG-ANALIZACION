@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::table('auditorias', function (Blueprint $table) {
@@ -38,8 +37,8 @@ return new class extends Migration
                 'ERROR_SISTEMA',          // Error detectado
                 'REQUIERE_REVISION'       // Requiere validación
             ])
-            ->nullable()
-            ->after('nivel_confianza');
+                ->nullable()
+                ->after('nivel_confianza');
 
             // Severidad del cambio: Impacto en la salud del paciente
             // Relevancia: Todos los roles generan auditoría con esta clasificación

@@ -12,9 +12,12 @@ class GrupoCardiacoController extends Controller
     {
         $query = GrupoCardiaco::query();
 
-        if ($request->has('search')) {
-            $searchTerm = $request->input('search');
-            $query->where('nombre', 'like', '%' . $searchTerm . '%');
+        if ($request->filled('search')) {
+            $searchTerm = trim($request->input('search'));
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('nombre', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('descripcion', 'like', '%' . $searchTerm . '%');
+            });
         }
 
         $grupos = $query->orderBy('grupo_id', 'desc')->paginate(10);

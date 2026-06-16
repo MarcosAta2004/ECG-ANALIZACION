@@ -77,13 +77,50 @@
                 <div class="header-title">
                     <h4 class="card-title">Lista de Pacientes</h4>
                 </div>
+                @can('pacientes.store')
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPacienteModal">
                     <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     Registrar Paciente
                 </button>
+                @endcan
             </div>
+
+            {{-- Barra de búsqueda --}}
+            <div class="card-body border-bottom pb-3">
+                <form method="GET" action="{{ route('pacientes.index') }}" class="d-flex gap-2 align-items-center">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <svg width="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 15.4183 19 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <input type="text" class="form-control border-start-0 ps-0" name="search"
+                            value="{{ request('search') }}"
+                            placeholder="Buscar por código de paciente (ej: ECG-2025-001)..."
+                            autocomplete="off">
+                        @if(request('search'))
+                            <a href="{{ route('pacientes.index') }}" class="btn btn-outline-secondary" title="Limpiar búsqueda">
+                                <svg width="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </a>
+                        @endif
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                    </div>
+                </form>
+                @if(request('search'))
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Mostrando resultados para: <strong>"{{ request('search') }}"</strong>
+                            — {{ $pacientes->total() }} resultado(s) encontrado(s).
+                        </small>
+                    </div>
+                @endif
+            </div>
+
             <div class="card-body px-0">
                 <div class="table-responsive">
                     <table class="table table-striped mb-0" role="grid">
@@ -91,12 +128,11 @@
                             <tr class="ligth">
                                 <th class="text-center">#</th>
                                 <th>Código Generado</th>
-                                <th>Prefijo</th>
                                 <th>Fecha Nacimiento</th>
                                 <th>Sexo</th>
                                 <th>Peso (kg)</th>
                                 <th>Estado</th>
-                                <th style="min-width: 100px">Acciones</th>
+                                <th style="width: 150px; min-width: 150px">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -104,7 +140,6 @@
                                 <tr>
                                     <td class="text-center"><span class="badge bg-dark">#{{ $paciente->paciente_id }}</span></td>
                                     <td><span class="badge bg-primary">{{ $paciente->codigo_generado }}</span></td>
-                                    <td>{{ $paciente->prefijoPaciente->nombre ?? 'N/A' }}</td>
                                     <td>{{ $paciente->fecha_nacimiento ? \Carbon\Carbon::parse($paciente->fecha_nacimiento)->format('d/m/Y') : '-' }}</td>
                                     <td>
                                         @if($paciente->sexo == 'M')
@@ -123,41 +158,56 @@
                                             <span class="badge bg-danger">Inactivo</span>
                                         @endif
                                     </td>
-                                    <td>
-                                        <div class="flex align-items-center list-user-action">
-                                            <button class="btn btn-sm btn-icon btn-warning" data-bs-toggle="modal" data-bs-target="#editPacienteModal{{ $paciente->paciente_id }}" title="Editar">
-                                                <span class="btn-inner">
-                                                    <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <path d="M11.4925 2.78906H7.75349C4.67849 2.78906 2.75049 4.96606 2.75049 8.04806V16.3621C2.75049 19.4441 4.66949 21.6211 7.75349 21.6211H16.5775C19.6625 21.6211 21.5815 19.4441 21.5815 16.3621V12.3341" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M8.82812 10.921L16.3011 3.44799C17.2321 2.51799 18.7411 2.51799 19.6721 3.44799L20.8891 4.66499C21.8201 5.59599 21.8201 7.10599 20.8891 8.03599L13.3801 15.545C12.9731 15.952 12.4211 16.181 11.8451 16.181H8.09912L8.19312 12.401C8.20712 11.845 8.43412 11.315 8.82812 10.921Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                                                        <path d="M15.1655 4.60254L19.7315 9.16854" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                                                    </svg>
-                                                </span>
-                                            </button>
-                                            
-                                            @if($paciente->estado == 1)
-                                                <button type="button" class="btn btn-sm btn-icon btn-danger" data-bs-toggle="modal" data-bs-target="#deletePacienteModal{{ $paciente->paciente_id }}" title="Desactivar">
-                                                    <span class="btn-inner">
-                                                        <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor">
-                                                            <path d="M19.3248 9.46826C19.3248 9.46826 18.7818 16.2033 18.4668 19.0403C18.3168 20.3953 17.4798 21.1893 16.1088 21.2143C13.4998 21.2613 10.8878 21.2643 8.27979 21.2093C6.96079 21.1823 6.13779 20.3783 5.99079 19.0473C5.67379 16.1853 5.13379 9.46826 5.13379 9.46826" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                                                            <path d="M20.708 6.23975H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                                                            <path d="M17.4406 6.23973C16.6556 6.23973 15.9796 5.68473 15.8256 4.91573L15.5826 3.69973C15.4326 3.13873 14.9246 2.75073 14.3456 2.75073H10.1126C9.53358 2.75073 9.02558 3.13873 8.87558 3.69973L8.63258 4.91573C8.47858 5.68473 7.80258 6.23973 7.01758 6.23973" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                                                        </svg>
-                                                    </span>
-                                                </button>
-                                            @else
-                                                <button type="button" class="btn btn-sm btn-icon btn-success" data-bs-toggle="modal" data-bs-target="#activatePacienteModal{{ $paciente->paciente_id }}" title="Activar">
+                                        <td class="text-nowrap" style="width: 150px; min-width: 150px">
+                                            <div class="d-inline-flex align-items-center gap-1 flex-nowrap" role="group" aria-label="Acciones del paciente">
+                                                @can('pacientes.show')
+                                                <button type="button" class="btn btn-sm btn-icon btn-info flex-shrink-0" data-bs-toggle="modal" data-bs-target="#showPacienteModal{{ $paciente->paciente_id }}" title="Ver">
                                                     <span class="btn-inner">
                                                         <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M16.3345 2.75024H7.66549C4.64449 2.75024 2.75049 4.88924 2.75049 7.91624V16.0842C2.75049 19.1112 4.63549 21.2502 7.66549 21.2502H16.3335C19.3645 21.2502 21.2505 19.1112 21.2505 16.0842V7.91624C21.2505 4.88924 19.3645 2.75024 16.3345 2.75024Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                                                            <path d="M8.43994 12.0002L10.8139 14.3732L15.5599 9.6272" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                            <path d="M1.99976 12C1.99976 12 5.63576 5 11.9998 5C18.3638 5 21.9998 12 21.9998 12C21.9998 12 18.3638 19 11.9998 19C5.63576 19 1.99976 12 1.99976 12Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                            <path d="M11.9998 15C13.6566 15 14.9998 13.6569 14.9998 12C14.9998 10.3431 13.6566 9 11.9998 9C10.3429 9 8.99976 10.3431 8.99976 12C8.99976 13.6569 10.3429 15 11.9998 15Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
                                                         </svg>
                                                     </span>
                                                 </button>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
+                                                @endcan
+
+                                                @can('pacientes.update')
+                                                <button type="button" class="btn btn-sm btn-icon btn-warning flex-shrink-0" data-bs-toggle="modal" data-bs-target="#editPacienteModal{{ $paciente->paciente_id }}" title="Editar">
+                                                    <span class="btn-inner">
+                                                        <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M11.4925 2.78906H7.75349C4.67849 2.78906 2.75049 4.96606 2.75049 8.04806V16.3621C2.75049 19.4441 4.66949 21.6211 7.75349 21.6211H16.5775C19.6625 21.6211 21.5815 19.4441 21.5815 16.3621V12.3341" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M8.82812 10.921L16.3011 3.44799C17.2321 2.51799 18.7411 2.51799 19.6721 3.44799L20.8891 4.66499C21.8201 5.59599 21.8201 7.10599 20.8891 8.03599L13.3801 15.545C12.9731 15.952 12.4211 16.181 11.8451 16.181H8.09912L8.19312 12.401C8.20712 11.845 8.43412 11.315 8.82812 10.921Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                            <path d="M15.1655 4.60254L19.7315 9.16854" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                        </svg>
+                                                    </span>
+                                                </button>
+                                                @endcan
+
+                                                @can('pacientes.activar')
+                                                @if($paciente->estado == 1)
+                                                    <button type="button" class="btn btn-sm btn-icon btn-danger flex-shrink-0" data-bs-toggle="modal" data-bs-target="#deletePacienteModal{{ $paciente->paciente_id }}" title="Desactivar">
+                                                        <span class="btn-inner">
+                                                            <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor">
+                                                                <path d="M19.3248 9.46826C19.3248 9.46826 18.7818 16.2033 18.4668 19.0403C18.3168 20.3953 17.4798 21.1893 16.1088 21.2143C13.4998 21.2613 10.8878 21.2643 8.27979 21.2093C6.96079 21.1823 6.13779 20.3783 5.99079 19.0473C5.67379 16.1853 5.13379 9.46826 5.13379 9.46826" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                                <path d="M20.708 6.23975H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                                <path d="M17.4406 6.23973C16.6556 6.23973 15.9796 5.68473 15.8256 4.91573L15.5826 3.69973C15.4326 3.13873 14.9246 2.75073 14.3456 2.75073H10.1126C9.53358 2.75073 9.02558 3.13873 8.87558 3.69973L8.63258 4.91573C8.47858 5.68473 7.80258 6.23973 7.01758 6.23973" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                            </svg>
+                                                        </span>
+                                                    </button>
+                                                @else
+                                                    <button type="button" class="btn btn-sm btn-icon btn-success flex-shrink-0" data-bs-toggle="modal" data-bs-target="#activatePacienteModal{{ $paciente->paciente_id }}" title="Activar">
+                                                        <span class="btn-inner">
+                                                            <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path fill-rule="evenodd" clip-rule="evenodd" d="M16.3345 2.75024H7.66549C4.64449 2.75024 2.75049 4.88924 2.75049 7.91624V16.0842C2.75049 19.1112 4.63549 21.2502 7.66549 21.2502H16.3335C19.3645 21.2502 21.2505 19.1112 21.2505 16.0842V7.91624C21.2505 4.88924 19.3645 2.75024 16.3345 2.75024Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                                <path d="M8.43994 12.0002L10.8139 14.3732L15.5599 9.6272" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                            </svg>
+                                                        </span>
+                                                    </button>
+                                                @endif
+                                                @endcan
+                                            </div>
+                                        </td>
+                                    </tr>
 
                                 <!-- Edit Modal -->
                                 <div class="modal fade" id="editPacienteModal{{ $paciente->paciente_id }}" tabindex="-1" aria-hidden="true">
@@ -261,9 +311,77 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Show Modal -->
+                                <div class="modal fade" id="showPacienteModal{{ $paciente->paciente_id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Detalle del Paciente</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label text-muted mb-1">Codigo generado</label>
+                                                        <div><span class="badge bg-primary">{{ $paciente->codigo_generado }}</span></div>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label text-muted mb-1">Fecha de nacimiento</label>
+                                                        <div>{{ $paciente->fecha_nacimiento ? \Carbon\Carbon::parse($paciente->fecha_nacimiento)->format('d/m/Y') : '-' }}</div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label text-muted mb-1">Sexo</label>
+                                                        <div>
+                                                            @if($paciente->sexo == 'M')
+                                                                Masculino
+                                                            @elseif($paciente->sexo == 'F')
+                                                                Femenino
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label text-muted mb-1">Peso</label>
+                                                        <div>{{ $paciente->peso ? $paciente->peso . ' kg' : '-' }}</div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label text-muted mb-1">Estado</label>
+                                                        <div>
+                                                            @if($paciente->estado == 1)
+                                                                <span class="badge bg-success">Activo</span>
+                                                            @else
+                                                                <span class="badge bg-danger">Inactivo</span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label text-muted mb-1">Estudios registrados</label>
+                                                        <div>{{ $paciente->estudios_count ?? 0 }}</div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label text-muted mb-1">Registrado por</label>
+                                                        <div>
+                                                            @if($paciente->registradoPor)
+                                                                {{ $paciente->registradoPor->nombres }} {{ $paciente->registradoPor->apellido_paterno }} {{ $paciente->registradoPor->apellido_materno }}
+                                                            @else
+                                                                N/A
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted py-4">No hay pacientes registrados</td>
+                                    <td colspan="8" class="text-center text-muted py-4">No hay pacientes registrados</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -276,6 +394,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Create Modal -->
 <div class="modal fade" id="createPacienteModal" tabindex="-1" aria-labelledby="createPacienteModalLabel" aria-hidden="true">

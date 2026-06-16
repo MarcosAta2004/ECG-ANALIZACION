@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Diagnostico;
+use App\Models\Estudio;
 use App\Models\Imagen;
 use App\Models\Paciente;
 use App\Models\Prediccion;
+use App\Models\RitmoCardiaco;
 use App\Models\Reporte;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -24,87 +26,95 @@ class MenuPrincipalController extends Controller
     public function index(Request $request)
     {
         $routeName = $request->route()?->getName();
-        $stats = $this->buildSummaryStats();
-        $recentActivity = $this->buildRecentActivity();
+        $from = $request->date('from');
+        $to = $request->date('to');
+
+        $stats = $this->buildSummaryStats($from, $to);
+        $workQueue = $this->buildWorkQueue($from, $to);
+        $distribucionArritmias = $this->buildDistribucionArritmias($from, $to);
 
         if ($routeName === 'dashboard') {
             $metrics = $this->buildMetricsReport($request);
 
             return view('dashboard.index', array_merge($metrics, [
-                'stats' => $stats,
-                'recentActivity' => $recentActivity,
+                'stats'                => $stats,
+                'workQueue'            => $workQueue,
+                'distribucionArritmias'=> $distribucionArritmias,
+                'filters'              => $metrics['filters'] ?? [],
             ]));
         }
 
-        return view('dashboard.index', compact('stats', 'recentActivity'));
+        return view('dashboard.index', compact('stats', 'workQueue', 'distribucionArritmias'));
     }
 
-    public function downloadStatisticsPdf(Request $request)
+    public function downloadStatisticsCsv(Request $request)
     {
         $metrics = $this->buildMetricsReport($request);
+        $filters = $metrics['filters'];
 
-        $real            = $metrics['realMetrics'];
-        $rocData         = $metrics['rocData'];
-        $filters         = $metrics['filters'];
-        $positiveReal    = $metrics['positiveReal'];
-        $negativeReal    = $metrics['negativeReal'];
-        $reviewedAvgConf = $metrics['reviewedAvgConfidence'];
-
-        // Recalcular totales simples para el PDF
         $filteredImages = Imagen::query()
-            ->with(['prediccion.ritmo', 'estudio.diagnostico.ritmoCardiaco'])
+            ->with(['prediccion.ritmo', 'estudio.diagnostico.ritmoCardiaco', 'estudio.paciente'])
             ->when($filters['from'], fn($q) => $q->where('created_at', '>=', $filters['from']))
             ->when($filters['to'],   fn($q) => $q->where('created_at', '<=', $filters['to'] . ' 23:59:59'))
             ->get();
 
-        $total       = $filteredImages->count();
-        $normales    = $filteredImages->filter(fn($img) => !$this->isPositivePrediction($img))->count();
-        $arritmias   = $total - $normales;
-        $pctNormal   = $total > 0 ? round($normales  / $total * 100, 1) : 0;
-        $pctArr      = $total > 0 ? round($arritmias / $total * 100, 1) : 0;
-        $avgConf     = $this->averageConfidence($filteredImages);
-        $reviewed    = $filteredImages->filter(fn($img) => $img->estudio?->diagnostico);
-        $revCount    = $reviewed->count();
-        $revRate     = $total > 0 ? round($revCount / $total * 100, 1) : 0;
-
-        $pdf = $this->buildStatisticsPdfNative([
-            'generated_at'           => now()->format('d/m/Y H:i'),
-            'period'                 => $filters['label'],
-            'total'                  => $total,
-            'normales'               => $normales,
-            'arritmias'              => $arritmias,
-            'pct_normal'             => $pctNormal,
-            'pct_arr'                => $pctArr,
-            'avg_confidence'         => $avgConf,
-            'reviewed_count'         => $revCount,
-            'reviewed_rate'          => $revRate,
-            'unreviewed_count'       => max($total - $revCount, 0),
-            'reviewed_avg_confidence'=> $reviewedAvgConf,
-            'positive_real'          => $positiveReal,
-            'negative_real'          => $negativeReal,
-            'real_metrics'           => $real,
-            'roc_data'               => $rocData,
-        ]);
-
-        $filename = 'estadisticas_ecg_' . now()->format('Ymd_His') . '.pdf';
-
-        $filteredImages
-            ->pluck('estudio')
-            ->filter()
-            ->unique('estudio_id')
-            ->each(function ($estudio) use ($filename, $filters) {
-                $reporte = Reporte::firstOrNew(['estudio_id' => $estudio->estudio_id]);
-                $reporte->generado_por = auth()->id();
-                $reporte->resumen = $reporte->resumen ?: 'Reporte estadistico generado desde dashboard. Periodo: ' . $filters['label'];
-                $reporte->ruta_pdf = $filename;
-                $reporte->estado = 1;
-                $reporte->save();
-            });
-
-        return response($pdf, 200, [
-            'Content-Type'        => 'application/pdf',
+        $filename = 'estadisticas_ecg_' . now()->format('Ymd_His') . '.csv';
+        
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ]);
+        ];
+
+        $callback = function () use ($filteredImages) {
+            $file = fopen('php://output', 'w');
+            
+            // BOM for UTF-8
+            fputs($file, "\xEF\xBB\xBF");
+            
+            // Headers
+            fputcsv($file, [
+                'ID Estudio',
+                'Paciente Doc.',
+                'Fecha Subida',
+                'Analisis IA',
+                'Confianza IA (%)',
+                'Validado Por Medico',
+                'Diagnostico Medico',
+                'Concordancia'
+            ], ';'); // Usamos punto y coma porque Excel hispano lo prefiere
+
+            foreach ($filteredImages as $img) {
+                $estudio = $img->estudio;
+                $prediccion = $img->prediccion;
+                $diagnostico = $estudio?->diagnostico;
+
+                $iaLabel = $prediccion?->ritmo?->nombre ?? 'Desconocido';
+                $iaConfianza = $prediccion ? round($prediccion->probabilidad * 100, 2) : 0;
+                
+                $medicoChecked = $diagnostico ? 'SI' : 'NO';
+                $medicoLabel = $diagnostico?->ritmoCardiaco?->nombre ?? 'N/A';
+                
+                $concordancia = 'N/A';
+                if ($diagnostico) {
+                    $concordancia = $diagnostico->concordancia ? 'SI' : 'NO';
+                }
+
+                fputcsv($file, [
+                    $estudio?->estudio_id ?? '-',
+                    $estudio?->paciente?->numero_documento ?? '-',
+                    $img->created_at->format('Y-m-d H:i:s'),
+                    $iaLabel,
+                    $iaConfianza,
+                    $medicoChecked,
+                    $medicoLabel,
+                    $concordancia
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->streamDownload($callback, $filename, $headers);
     }
 
     private function buildStatisticsPdfNative(array $data): string
@@ -525,66 +535,144 @@ class MenuPrincipalController extends Controller
             'positiveReal' => $positiveReal,
             'negativeReal' => $negativeReal,
             'reviewedAvgConfidence' => $reviewedAvgConfidence,
-            'stats' => $this->buildSummaryStats(),
-            'recentActivity' => $this->buildRecentActivity(),
         ];
     }
 
-    private function buildSummaryStats(): array
+    private function buildSummaryStats(?\Carbon\Carbon $from, ?\Carbon\Carbon $to): array
     {
+        $queryFilter = function ($q) use ($from, $to) {
+            $q->when($from, fn($query) => $query->where('created_at', '>=', $from))
+              ->when($to, fn($query) => $query->where('created_at', '<=', $to->copy()->endOfDay()));
+        };
+
+        $totalImagenes    = Imagen::where($queryFilter)->count();
+        $arritmias        = Prediccion::whereHas('ritmo', fn($q) => $q->where('label', '!=', 'NORM'))
+                                      ->where($queryFilter)->count();
+
+        // Pendientes: estudios activos con imagen+predicción pero sin diagnóstico médico
+        $pendientes = Estudio::where('estado', 1)
+            ->whereHas('imagen.prediccion')
+            ->doesntHave('diagnostico')
+            ->where($queryFilter)
+            ->count();
+
+        // Concordancia: % de diagnósticos que coincidieron con la IA
+        $diagConConcordancia = Diagnostico::where('estado', 1)
+            ->whereNotNull('concordancia')
+            ->where($queryFilter)
+            ->count();
+        $diagConcordantes = Diagnostico::where('estado', 1)
+            ->where('concordancia', 1)
+            ->where($queryFilter)
+            ->count();
+        $tasaConcordancia = $diagConConcordancia > 0
+            ? round($diagConcordantes / $diagConConcordancia * 100, 1)
+            : null;
+
         return [
             [
-                'title' => 'Total Analisis',
-                'value' => Imagen::count(),
-                'subtitle' => 'Estudios cargados',
-                'trend' => 'up',
-                'trend_value' => '+15%',
-                'icon' => 'file-heart',
+                'title'       => 'ECGs Analizados',
+                'value'       => $totalImagenes,
+                'subtitle'    => 'Total procesados por IA',
+                'extra'       => null,
+                'color'       => 'primary',
             ],
             [
-                'title' => 'Diagnosticos',
-                'value' => Diagnostico::count(),
-                'subtitle' => 'Revisados por medicos',
-                'trend' => 'up',
-                'trend_value' => 'Estable',
-                'icon' => 'check-circle',
+                'title'       => 'Arritmias Detectadas',
+                'value'       => $arritmias,
+                'subtitle'    => 'Clasificadas como anómalas',
+                'extra'       => $totalImagenes > 0 ? round($arritmias / $totalImagenes * 100, 1) . '% del total' : null,
+                'color'       => 'danger',
             ],
             [
-                'title' => 'Arritmias Det.',
-                'value' => Prediccion::whereHas('ritmo', function ($q) {
-                    $q->where('label', '!=', 'NORM');
-                })->count(),
-                'subtitle' => 'Alertas generadas',
-                'trend' => 'down',
-                'trend_value' => '-5%',
-                'icon' => 'alert-triangle',
+                'title'       => 'Pendientes de Revisión',
+                'value'       => $pendientes,
+                'subtitle'    => 'Estudios sin diagnóstico médico',
+                'extra'       => $pendientes > 0 ? 'Requieren atención' : 'Sin pendientes',
+                'color'       => $pendientes > 0 ? 'warning' : 'success',
             ],
             [
-                'title' => 'Pacientes',
-                'value' => Paciente::count(),
-                'subtitle' => 'Registrados',
-                'trend' => 'up',
-                'trend_value' => '+2',
-                'icon' => 'users',
+                'title'       => 'Concordancia IA-Médico',
+                'value'       => $tasaConcordancia !== null ? $tasaConcordancia . '%' : 'N/A',
+                'subtitle'    => 'Acuerdos sobre ' . $diagConConcordancia . ' casos',
+                'extra'       => $tasaConcordancia !== null
+                    ? ($tasaConcordancia >= 85 ? 'Excelente alineación' : ($tasaConcordancia >= 70 ? 'Buena alineación' : 'Requiere revisión'))
+                    : 'Sin datos suficientes',
+                'color'       => $tasaConcordancia !== null
+                    ? ($tasaConcordancia >= 85 ? 'success' : ($tasaConcordancia >= 70 ? 'info' : 'warning'))
+                    : 'secondary',
             ],
         ];
     }
 
-    private function buildRecentActivity(): Collection
+    /**
+     * Cola de trabajo: estudios con arritmia detectada por IA, SIN diagnóstico médico aún.
+     * Ordenados por confianza descendente (los más urgentes primero).
+     */
+    private function buildWorkQueue(?\Carbon\Carbon $from, ?\Carbon\Carbon $to): Collection
     {
-        return Imagen::with('prediccion.ritmo')
-            ->latest()
-            ->take(5)
+        return Estudio::with(['paciente', 'imagen.prediccion.ritmoCardiaco'])
+            ->where('estado', 1)
+            ->when($from, fn($q) => $q->where('created_at', '>=', $from))
+            ->when($to, fn($q) => $q->where('created_at', '<=', $to->copy()->endOfDay()))
+            ->whereHas('imagen.prediccion')
+            ->doesntHave('diagnostico')
             ->get()
-            ->map(function ($img) {
-                $isNorm = ($img->prediccion?->ritmo?->label ?? '') === 'NORM';
+            ->sortByDesc(function ($estudio) {
+                $prediccion = $estudio->imagen?->prediccion;
+                $label = $prediccion?->ritmoCardiaco?->label ?? '';
+                $isArrhythmia = $label !== '' && $label !== 'NORM';
+                $confidence = (float) ($prediccion?->probabilidad ?? 0);
+
+                return ($isArrhythmia ? 1000 : 0) + $confidence;
+            })
+            ->take(8)
+            ->map(function ($estudio) {
+                $prediccion = $estudio->imagen?->prediccion;
+                $ritmo      = $prediccion?->ritmoCardiaco;
+                $label      = $ritmo?->label ?? '?';
+                $isArrhythmia = $label !== '?' && $label !== 'NORM';
+                $prob       = $prediccion ? round($prediccion->probabilidad * 100, 1) : 0;
 
                 return [
-                    'file' => $img->ruta ? basename($img->ruta) : 'Analisis',
-                    'time' => $img->created_at->diffForHumans(),
-                    'type' => $isNorm ? 'Normal' : 'Arritmia',
+                    'estudio_id'    => $estudio->estudio_id,
+                    'paciente'      => $estudio->paciente?->codigo_generado ?? 'N/A',
+                    'ritmo'         => $ritmo?->nombre ?? 'Desconocido',
+                    'label'         => $label,
+                    'is_arrhythmia' => $isArrhythmia,
+                    'resultado'     => $isArrhythmia ? 'Arritmia' : 'Normal',
+                    'confianza'     => $prob,
+                    'fecha'         => $estudio->created_at->format('d/m/Y H:i'),
+                    'hace'          => $estudio->created_at->diffForHumans(),
                 ];
-            });
+            })->values();
+    }
+
+    /**
+     * Distribución de los tipos de arritmia detectados por la IA.
+     */
+    private function buildDistribucionArritmias(?\Carbon\Carbon $from, ?\Carbon\Carbon $to): array
+    {
+        $data = Prediccion::with('ritmoCardiaco')
+            ->whereHas('ritmoCardiaco', fn($q) => $q->where('label', '!=', 'NORM'))
+            ->when($from, fn($q) => $q->where('created_at', '>=', $from))
+            ->when($to, fn($q) => $q->where('created_at', '<=', $to->copy()->endOfDay()))
+            ->get()
+            ->groupBy(fn($p) => $p->ritmoCardiaco?->label ?? '?')
+            ->map(function ($group) {
+                $ritmo = $group->first()->ritmoCardiaco;
+                return [
+                    'label'  => $ritmo?->label ?? '?',
+                    'nombre' => $ritmo?->nombre ?? 'Desconocido',
+                    'count'  => $group->count(),
+                ];
+            })
+            ->sortByDesc('count')
+            ->take(6)
+            ->values()
+            ->all();
+
+        return $data;
     }
 
     private function buildRealMetrics(Collection $reviewed): array

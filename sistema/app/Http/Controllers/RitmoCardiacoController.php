@@ -15,11 +15,12 @@ class RitmoCardiacoController extends Controller
     {
         $query = RitmoCardiaco::with(['grupoCardiaco', 'nivelGravedad', 'clasificacionArritmia']);
 
-        if ($request->has('search')) {
-            $searchTerm = $request->input('search');
+        if ($request->filled('search')) {
+            $searchTerm = trim($request->input('search'));
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('nombre', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('label', 'like', '%' . $searchTerm . '%');
+                  ->orWhere('label', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('descripcion', 'like', '%' . $searchTerm . '%');
             });
         }
 

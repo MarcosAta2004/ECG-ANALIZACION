@@ -77,14 +77,52 @@
                 <div class="header-title">
                     <h4 class="card-title">Lista de Prefijos de Paciente</h4>
                 </div>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPrefijoModal">
+                @can('prefijos-paciente.store')
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPrefijoModal">
                     <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     Añadir Prefijo
                 </button>
+@endcan
             </div>
+
+            {{-- Barra de búsqueda --}}
+            <div class="card-body border-bottom pb-3">
+                <form method="GET" action="{{ route('prefijos-paciente.index') }}" class="d-flex gap-2 align-items-center">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <svg width="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 15.4183 19 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <input type="text" class="form-control border-start-0 ps-0" name="search"
+                            value="{{ request('search') }}"
+                            placeholder="Buscar por nombre del prefijo..."
+                            autocomplete="off">
+                        @if(request('search'))
+                            <a href="{{ route('prefijos-paciente.index') }}" class="btn btn-outline-secondary" title="Limpiar búsqueda">
+                                <svg width="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </a>
+                        @endif
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                    </div>
+                </form>
+                @if(request('search'))
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Mostrando resultados para: <strong>"{{ request('search') }}"</strong>
+                            — {{ $prefijos->total() }} resultado(s) encontrado(s).
+                        </small>
+                    </div>
+                @endif
+            </div>
+
             <div class="card-body px-0">
+
                 <div class="table-responsive">
                     <table class="table table-striped mb-0" role="grid">
                         <thead>
@@ -111,7 +149,8 @@
                                     </td>
                                     <td>
                                         <div class="flex align-items-center list-user-action">
-                                            <button class="btn btn-sm btn-icon btn-warning" data-bs-toggle="modal" data-bs-target="#editPrefijoModal{{ $prefijo->prefijo_id }}" title="Editar">
+                                            @can('prefijos-paciente.update')
+<button class="btn btn-sm btn-icon btn-warning" data-bs-toggle="modal" data-bs-target="#editPrefijoModal{{ $prefijo->prefijo_id }}" title="Editar">
                                                 <span class="btn-inner">
                                                     <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                         <path d="M11.4925 2.78906H7.75349C4.67849 2.78906 2.75049 4.96606 2.75049 8.04806V16.3621C2.75049 19.4441 4.66949 21.6211 7.75349 21.6211H16.5775C19.6625 21.6211 21.5815 19.4441 21.5815 16.3621V12.3341" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -120,6 +159,7 @@
                                                     </svg>
                                                 </span>
                                             </button>
+@endcan
                                             
                                             @if($prefijo->estado == 1)
                                                 <button type="button" class="btn btn-sm btn-icon btn-danger" data-bs-toggle="modal" data-bs-target="#deletePrefijoModal{{ $prefijo->prefijo_id }}" title="Desactivar">

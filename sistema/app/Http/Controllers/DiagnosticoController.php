@@ -84,9 +84,24 @@ class DiagnosticoController extends Controller
         $diagnostico->fecha_revision = now();
         $diagnostico->save();
 
+        // ==========================================
+        // NUEVA LÓGICA DE VERSIONADO LEGAL
+        // ==========================================
+        // Buscamos si ya existía un reporte PDF generado y activo para este estudio
+        $reporteViejo = \App\Models\Reporte::where('estudio_id', $diagnostico->estudio_id)
+            ->where('estado', 1)
+            ->first();
+
+        if ($reporteViejo) {
+            // Lo marcamos como inactivo (0). El PDF físico se conserva en el servidor.
+            $reporteViejo->estado = 0; 
+            $reporteViejo->save();
+        }
+        // ==========================================
+
         return redirect()->route('diagnosticos.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se actualizó correctamente el diagnóstico del estudio',
+            'message' => 'Se actualizó correctamente el diagnóstico del estudio. Si había un reporte PDF, deberá generarse nuevamente.',
             'alert'   => 'success',
             'data'    => $diagnostico->estudio->paciente->codigo_generado,
         ]);
@@ -189,6 +204,22 @@ class DiagnosticoController extends Controller
                 'fecha_revision' => now(),
             ]
         );
+
+        // ==========================================
+        // NUEVA LÓGICA DE VERSIONADO LEGAL (AJAX)
+        // ==========================================
+        if (!$diagnostico->wasRecentlyCreated) {
+            // Si el diagnóstico se actualizó (no es nuevo), invalidamos el PDF viejo
+            $reporteViejo = \App\Models\Reporte::where('estudio_id', $estudio->estudio_id)
+                ->where('estado', 1)
+                ->first();
+
+            if ($reporteViejo) {
+                $reporteViejo->estado = 0;
+                $reporteViejo->save();
+            }
+        }
+        // ==========================================
 
         return response()->json([
             'success'     => true,

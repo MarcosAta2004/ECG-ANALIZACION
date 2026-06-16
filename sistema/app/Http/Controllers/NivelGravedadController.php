@@ -10,18 +10,19 @@ class NivelGravedadController extends Controller
 
     public function __construct()
     {
-        $this->middleware('can:niveles.index')->only('index');
-        $this->middleware('can:niveles.edit')->only('update');
-        $this->middleware('can:niveles.create')->only('store');
-        $this->middleware('can:niveles.destroy')->only('destroy','activar');
+        $this->middleware('can:niveles-gravedad.index')->only('index');
+        $this->middleware('can:niveles-gravedad.update')->only('update');
+        $this->middleware('can:niveles-gravedad.store')->only('store');
+        $this->middleware('can:niveles-gravedad.destroy')->only('destroy');
+        $this->middleware('can:niveles-gravedad.activar')->only('activar');
     }
 
     public function index(Request $request)
     {
         $query = NivelGravedad::query();
 
-        if ($request->has('search')) {
-            $searchTerm = $request->input('search');
+        if ($request->filled('search')) {
+            $searchTerm = trim($request->input('search'));
             $query->where('nombre', 'like', '%' . $searchTerm . '%');
         }
 

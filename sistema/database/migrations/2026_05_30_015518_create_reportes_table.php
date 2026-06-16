@@ -9,17 +9,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reportes', function (Blueprint $table) {
-            $table->increments('reporte_id');
+            $table->id('reporte_id'); // Cambiado a id() moderno
 
-            $table->unsignedInteger('estudio_id');
-            $table->foreign('estudio_id')->references('estudio_id')->on('estudios');
+            // Relaciones protegidas (No permite borrar el estudio o al doctor si hay reporte)
+            // 1. Creamos la columna exactamente como un Integer sin signo
+            $table->unsignedInteger('estudio_id'); 
 
-            $table->unsignedBigInteger('generado_por');
-            $table->foreign('generado_por')->references('id')->on('users');
+            // 2. Le asignamos la llave foránea protegiendo el borrado
+            $table->foreign('estudio_id')
+                ->references('estudio_id')
+                ->on('estudios')
+                ->restrictOnDelete();
+
+            $table->foreignId('generado_por')
+                  ->constrained('users')
+                  ->restrictOnDelete();
 
             $table->text('resumen')->nullable();
-
-            // Ruta en disco del PDF generado por Laravel con DomPDF
             $table->string('ruta_pdf', 255)->nullable();
 
             $table->integer('estado')->default(1);

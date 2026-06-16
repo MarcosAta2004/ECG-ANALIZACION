@@ -53,7 +53,7 @@ class EstudioController extends Controller
             return [
                 'id' => $img->imagen_id,
                 'study_id' => $img->estudio_id,
-                'report_url' => route('reportes.estudio.pdf', ['id' => $img->estudio_id]),
+                'report_url' => route('reportes.verPDF', ['id' => $img->estudio_id]),
                 'ecg_url' => route('imagenes.ecg.ver', ['imagen' => $img->imagen_id]),
                 'ecg_download_url' => route('imagenes.ecg.download', ['imagen' => $img->imagen_id]),
                 'filename' => basename($img->ruta),
@@ -94,14 +94,23 @@ class EstudioController extends Controller
         return view('historial.index', compact('history', 'stats', 'filters', 'canReview', 'ritmos'));
     }
 
+    public function show(Estudio $estudio)
+    {
+        return redirect()->route('estudios.index');
+    }
+
+
     public function index(Request $request)
     {
         $query = Estudio::with(['paciente', 'registradoPor']);
 
-        if ($request->has('search')) {
-            $searchTerm = $request->input('search');
-            $query->whereHas('paciente', function ($q) use ($searchTerm) {
-                $q->where('codigo_generado', 'like', '%' . $searchTerm . '%');
+        if ($request->filled('search')) {
+            $searchTerm = trim($request->input('search'));
+            $query->where(function ($q) use ($searchTerm) {
+                $q->whereHas('paciente', function ($pq) use ($searchTerm) {
+                    $pq->where('codigo_generado', 'like', '%' . $searchTerm . '%');
+                })
+                ->orWhere('observaciones', 'like', '%' . $searchTerm . '%');
             });
         }
 

@@ -11,6 +11,7 @@ use App\Services\ServicioAuditoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage; // Importante para guardar el PDF en el servidor
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReporteController extends Controller
@@ -32,9 +33,41 @@ class ReporteController extends Controller
         $stats = [
             'patients' => \App\Models\Paciente::has('estudios')->count(),
             'analyses' => \App\Models\Imagen::count(),
+            'official_reports' => Estudio::whereHas('diagnostico')->count(),
         ];
 
-        return view('reportes.index', compact('patients', 'stats'));
+        $estudios = Estudio::with([
+                'paciente',
+                'diagnostico.ritmoCardiaco',
+                'imagen.prediccion.ritmoCardiaco',
+                'reporte' => function ($query) {
+                    $query->where('ruta_pdf', 'like', '%.pdf')
+                        ->latest('reporte_id');
+                },
+            ])
+            ->whereHas('diagnostico')
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = trim((string) $request->input('search'));
+
+                $query->where(function ($q) use ($search) {
+                    if (ctype_digit($search)) {
+                        $q->where('estudio_id', (int) $search);
+                    }
+
+                    $q->orWhereHas('paciente', function ($patientQuery) use ($search) {
+                            $patientQuery->where('codigo_generado', 'like', '%' . $search . '%');
+                        })
+                        ->orWhereHas('diagnostico.ritmoCardiaco', function ($rhythmQuery) use ($search) {
+                            $rhythmQuery->where('nombre', 'like', '%' . $search . '%')
+                                ->orWhere('label', 'like', '%' . $search . '%');
+                        });
+                });
+            })
+            ->orderByDesc('estudio_id')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('reportes.index', compact('patients', 'stats', 'estudios'));
     }
 
     public function download(Request $request)
@@ -101,7 +134,7 @@ class ReporteController extends Controller
                 $this->registrarReporteGenerado(
                     $estudio,
                     $filename,
-                    'Reporte consolidado generado desde el modulo de reportes.'
+                    'Reporte consolidado Excel generado desde el modulo de reportes.'
                 );
             });
 
@@ -110,7 +143,7 @@ class ReporteController extends Controller
             'Reportes',
             'ecg_analyses',
             null,
-            'Descarga de reporte de pacientes.',
+            'Descarga de reporte de pacientes en Excel.',
             null,
             [
                 'mode'            => $validated['mode'],
@@ -129,7 +162,7 @@ class ReporteController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'estudio_id' => 'required|exists:estudios,estudio_id|unique:reportes,estudio_id',
+            'estudio_id' => 'required|exists:estudios,estudio_id',
             'resumen'    => 'nullable',
         ]);
 
@@ -137,13 +170,14 @@ class ReporteController extends Controller
         $reporte->estudio_id   = $request->estudio_id;
         $reporte->generado_por = Auth::id();
         $reporte->resumen      = $request->resumen ?? null;
+        $reporte->estado       = 1;
         $reporte->save();
 
         return redirect()->route('reportes.index')->with([
             'ok'      => 'enabled',
-            'message' => 'Se acaba de generar correctamente el reporte del estudio',
+            'message' => 'Se acaba de registrar correctamente el reporte del estudio',
             'alert'   => 'success',
-            'data'    => $reporte->estudio->paciente->codigo_generado,
+            'data'    => $reporte->estudio->paciente->codigo_generado ?? 'N/A',
         ]);
     }
 
@@ -160,7 +194,7 @@ class ReporteController extends Controller
             'ok'      => 'enabled',
             'message' => 'Se acaba de actualizar correctamente el reporte del estudio',
             'alert'   => 'success',
-            'data'    => $reporte->estudio->paciente->codigo_generado,
+            'data'    => $reporte->estudio->paciente->codigo_generado ?? 'N/A',
         ]);
     }
 
@@ -173,7 +207,7 @@ class ReporteController extends Controller
             'ok'      => 'enabled',
             'message' => 'Se acaba de deshabilitar el reporte',
             'alert'   => 'danger',
-            'data'    => $reporte->estudio->paciente->codigo_generado,
+            'data'    => $reporte->estudio->paciente->codigo_generado ?? 'N/A',
         ]);
     }
 
@@ -186,12 +220,31 @@ class ReporteController extends Controller
             'ok'      => 'enabled',
             'message' => 'Se acaba de habilitar el reporte',
             'alert'   => 'primary',
-            'data'    => $reporte->estudio->paciente->codigo_generado,
+            'data'    => $reporte->estudio->paciente->codigo_generado ?? 'N/A',
         ]);
     }
 
     public function verPDF($id)
     {
+        $estudio = \App\Models\Estudio::findOrFail($id);
+
+        // Seguridad: Verificar si existe el diagnóstico final
+        if (!$estudio->diagnostico()->exists()) {
+            return redirect()->back()->with([
+                'alert'   => 'warning',
+                'message' => 'El reporte aún no puede generarse. Se requiere el diagnóstico final del cardiólogo.'
+            ]);
+        }
+
+        if ($reporteActivo = $this->reporteActivoConArchivo($estudio)) {
+            return Storage::disk('public')->response(
+                'reportes/' . $reporteActivo->ruta_pdf,
+                $reporteActivo->ruta_pdf,
+                ['Content-Type' => 'application/pdf'],
+                'inline'
+            );
+        }
+
         [$pdf, $filename] = $this->generarPdfEstudio($id);
 
         return $pdf->stream($filename);
@@ -199,6 +252,22 @@ class ReporteController extends Controller
 
     public function descargarPDF($id)
     {
+        $estudio = \App\Models\Estudio::findOrFail($id);
+
+        if (!$estudio->diagnostico()->exists()) {
+            return redirect()->back()->with([
+                'alert'   => 'warning',
+                'message' => 'El reporte aún no puede generarse para descargarse. Se requiere el diagnóstico final del cardiólogo.'
+            ]);
+        }
+
+        if ($reporteActivo = $this->reporteActivoConArchivo($estudio)) {
+            return Storage::disk('public')->download(
+                'reportes/' . $reporteActivo->ruta_pdf,
+                $reporteActivo->ruta_pdf
+            );
+        }
+
         [$pdf, $filename] = $this->generarPdfEstudio($id);
 
         return $pdf->download($filename);
@@ -209,6 +278,11 @@ class ReporteController extends Controller
         // 1. Obtener el estudio con todas sus relaciones
         $estudio = \App\Models\Estudio::with(['paciente', 'diagnostico.ritmoCardiaco', 'imagen.prediccion.ritmoCardiaco'])->findOrFail($id);
         
+        // 2. Verificamos si YA EXISTE un reporte ACTIVO y guardado físicamente
+        // ==========================================
+        // SI NO EXISTE, PREPARAMOS LOS DATOS Y LO GENERAMOS
+        // ==========================================
+
         $paciente = $estudio->paciente;
         $diagnostico = $estudio->diagnostico;
         $ia = $estudio->imagen?->prediccion;
@@ -218,7 +292,6 @@ class ReporteController extends Controller
             ? mb_strtoupper(trim((string) $ritmoIa->label), 'UTF-8') === mb_strtoupper(trim((string) $ritmoMedico->label), 'UTF-8')
             : ($diagnostico?->concordancia ?? false);
         
-        // 2. Preparar datos para la vista
         $data = [
             'paciente' => [
                 'codigo_generado' => $paciente->codigo_generado ?? 'N/A',
@@ -249,32 +322,52 @@ class ReporteController extends Controller
                 'observacion' => $diagnostico?->observacion ?? 'Sin observaciones médicas.',
             ],
             'medico' => [
-                'nombre' => 'ESPECIALISTA EN TURNO', // Opcional: podrías jalar el nombre del usuario que creó el diagnóstico
+                'nombre' => 'ESPECIALISTA EN TURNO',
                 'cmp' => ''
             ]
         ];
 
-        // Nombre del archivo profesional
-        $filename = 'REPORTE_' . ($paciente->codigo_generado ?? $id) . '_' . now()->format('dmY') . '.pdf';
+        // 3. Generamos un nombre ÚNICO para evitar colisiones
+        $version = now()->format('dmY_His');
+        $filename = 'REPORTE_' . ($paciente->codigo_generado ?? $id) . '_' . $version . '.pdf';
 
+        // 4. Creamos el PDF con DomPDF
         $pdf = Pdf::loadView('reportes.estudio_pdf', $data);
 
+        // 5. GUARDAMOS EL ARCHIVO FÍSICAMENTE EN EL SERVIDOR (storage/app/public/reportes)
+        Storage::disk('public')->put('reportes/' . $filename, $pdf->output());
+
+        // 6. Registramos en la Base de Datos
         $this->registrarReporteGenerado(
             $estudio,
             $filename,
-            'Reporte clinico generado desde historial.'
+            'Reporte clínico oficial validado por cardiología.'
         );
 
         return [$pdf, $filename];
     }
 
+    private function reporteActivoConArchivo(Estudio $estudio): ?Reporte
+    {
+        return Reporte::activos()
+            ->where('estudio_id', $estudio->estudio_id)
+            ->whereNotNull('ruta_pdf')
+            ->latest('reporte_id')
+            ->get()
+            ->first(function (Reporte $reporte) {
+                return Storage::disk('public')->exists('reportes/' . $reporte->ruta_pdf);
+            });
+    }
+
     private function registrarReporteGenerado(Estudio $estudio, string $filename, string $resumen): Reporte
     {
-        $reporte = Reporte::firstOrNew(['estudio_id' => $estudio->estudio_id]);
+        // Siempre creamos un nuevo registro para mantener el historial (versionado)
+        $reporte = new Reporte();
+        $reporte->estudio_id = $estudio->estudio_id;
         $reporte->generado_por = Auth::id();
-        $reporte->resumen = $reporte->resumen ?: $resumen;
-        $reporte->ruta_pdf = $filename;
-        $reporte->estado = 1;
+        $reporte->resumen = $resumen;
+        $reporte->ruta_pdf = $filename; // Guardamos el nombre del archivo físico
+        $reporte->estado = 1; // Lo marcamos como el oficial actual
         $reporte->save();
 
         return $reporte;

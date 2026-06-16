@@ -14,15 +14,19 @@ class Auditoria extends Model
 
     protected $fillable = [
         'usuario_id',
+        'paciente_id',
         'accion',
         'modulo',
         'entidad',
         'entidad_id',
         'descripcion',
+        'ip_address',
         'valores_anteriores',
         'valores_nuevos',
         'user_agent',
+        'session_id',
         'created_at',
+        'updated_at',
         // ⭐ Campos nuevos para auditoría mejorada:
         'valoracion_medico',      // Solo cardiólogo
         'cardiologo_id',          // QUÉ cardiólogo valoró

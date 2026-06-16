@@ -47,6 +47,16 @@ class ImagenController extends Controller
         if (in_array($formato, ['png', 'jpg', 'jpeg'])) {
             [$ancho, $alto] = getimagesize($archivo->getRealPath());
             $resolucion = $ancho . 'x' . $alto;
+        } elseif ($formato === 'pdf') {
+            try {
+                $pdf = new \Imagick();
+                $pdf->readImage($archivo->getRealPath() . '[0]');
+                $resolucion = $pdf->getImageWidth() . 'x' . $pdf->getImageHeight();
+                $pdf->clear();
+                $pdf->destroy();
+            } catch (\Exception $e) {
+                $resolucion = 'Documento PDF';
+            }
         }
 
         $imagen = new Imagen();
@@ -57,34 +67,7 @@ class ImagenController extends Controller
         $imagen->tamano_kb   = (int) round($archivo->getSize() / 1024);
         $imagen->save();
 
-        if ($request->wantsJson()) { return response()->json(['success' => true, 'imagen_id' => $imagen->imagen_id]); } return redirect()->route('imagenes.index')->with(['ok' => 'enabled', 'message' => 'Se acaba de cargar correctamente la imagen ECG del estudio', 'alert' => 'success', 'data' => $imagen->estudio->paciente->codigo_generado]);
-    }
-
-    public function update(Request $request, Imagen $imagen)
-    {
-        $request->validate([
-            'archivo' => 'required|file|mimes:png,jpg,jpeg,pdf|max:10240',
-        ]);
-
-        Storage::disk('public')->delete($imagen->ruta);
-
-        $archivo    = $request->file('archivo');
-        $formato    = $archivo->getClientOriginalExtension();
-        $ruta = $this->guardarArchivoEcg($archivo, $formato);
-
-        $resolucion = null;
-        if (in_array($formato, ['png', 'jpg', 'jpeg'])) {
-            [$ancho, $alto] = getimagesize($archivo->getRealPath());
-            $resolucion = $ancho . 'x' . $alto;
-        }
-
-        $imagen->ruta       = $ruta;
-        $imagen->formato    = $formato;
-        $imagen->resolucion = $resolucion;
-        $imagen->tamano_kb  = (int) round($archivo->getSize() / 1024);
-        $imagen->save();
-
-        if ($request->wantsJson()) { return response()->json(['success' => true, 'imagen_id' => $imagen->imagen_id]); } return redirect()->route('imagenes.index')->with(['ok' => 'enabled', 'message' => 'Se acaba de cargar correctamente la imagen ECG del estudio', 'alert' => 'success', 'data' => $imagen->estudio->paciente->codigo_generado]);
+        if ($request->wantsJson()) { return response()->json(['success' => true, 'imagen_id' => $imagen->imagen_id]); } return redirect()->route('imagenes.index')->with(['ok' => 'enabled', 'message' => 'Se acaba de cargar correctamente la imagen ECG del estudio', 'alert' => 'success', 'data' => $imagen->estudio->paciente->codigo_generado, 'autoOpenImageId' => $imagen->imagen_id]);
     }
 
     public function destroy(Imagen $imagen)
@@ -103,6 +86,14 @@ class ImagenController extends Controller
         if ($request->wantsJson()) { return response()->json(['success' => true, 'imagen_id' => $imagen->imagen_id]); } return redirect()->route('imagenes.index')->with(['ok' => 'enabled', 'message' => 'Se acaba de cargar correctamente la imagen ECG del estudio', 'alert' => 'success', 'data' => $imagen->estudio->paciente->codigo_generado]);
     }
 
+    public function descargarEcg(Imagen $imagen)
+    {
+        abort_unless(Storage::disk('public')->exists($imagen->ruta), 404);
+        $path = Storage::disk('public')->path($imagen->ruta);
+        $filename = basename($imagen->ruta);
+        return response()->download($path, $filename);
+    }
+
     public function verEcg(Imagen $imagen)
     {
         abort_unless(Storage::disk('public')->exists($imagen->ruta), 404);
@@ -116,13 +107,6 @@ class ImagenController extends Controller
             'Content-Type'        => $mimeType,
             'Content-Disposition' => 'inline; filename="' . $filename . '"',
         ]);
-    }
-
-    public function descargarEcg(Imagen $imagen)
-    {
-        abort_unless(Storage::disk('public')->exists($imagen->ruta), 404);
-
-        return Storage::disk('public')->download($imagen->ruta, basename($imagen->ruta));
     }
 
     public function analyze(Request $request)
@@ -147,9 +131,9 @@ class ImagenController extends Controller
                 $paciente->save();
             } else {
                 $prefijo = PrefijoPaciente::findOrFail($validated['prefijo_id']);
-                $anio = now()->year;
-                $ultimo = Paciente::whereYear('created_at', $anio)->count() + 1;
-                $codigo = strtoupper($prefijo->nombre) . '-' . $anio . '-' . str_pad($ultimo, 3, '0', STR_PAD_LEFT);
+                $hoy = date('Y-m-d');
+                $ultimo = Paciente::whereDate('created_at', $hoy)->count() + 1;
+                $codigo = strtoupper($prefijo->nombre) . '_' . date('Ymd') . '_' . str_pad($ultimo, 3, '0', STR_PAD_LEFT);
                 $sexoPaciente = ((int) $validated['sex'] === 1) ? 'M' : 'F';
 
                 $paciente = new Paciente();
@@ -177,6 +161,16 @@ class ImagenController extends Controller
             if (in_array($formato, ['png', 'jpg', 'jpeg'])) {
                 [$ancho, $alto] = getimagesize($archivo->getRealPath());
                 $resolucion = $ancho . 'x' . $alto;
+            } elseif ($formato === 'pdf') {
+                try {
+                    $pdf = new \Imagick();
+                    $pdf->readImage($archivo->getRealPath() . '[0]');
+                    $resolucion = $pdf->getImageWidth() . 'x' . $pdf->getImageHeight();
+                    $pdf->clear();
+                    $pdf->destroy();
+                } catch (\Exception $e) {
+                    $resolucion = 'Documento PDF';
+                }
             }
 
             $imagen = new Imagen();
@@ -280,7 +274,7 @@ class ImagenController extends Controller
                 ]);
 
             if ($response->failed()) {
-                $msg = 'Error al conectar con el servidor de an+�lisis.';
+                $msg = 'Error al conectar con el servidor de analisis.';
                 $body = $response->json();
                 
                 if ($body) {

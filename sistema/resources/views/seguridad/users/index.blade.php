@@ -74,12 +74,14 @@
                 <div class="header-title">
                     <h4 class="card-title">Lista de Usuarios</h4>
                 </div>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUsuarioModal">
+                @can('usuarios.store')
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUsuarioModal">
                     <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     Añadir Usuario
                 </button>
+@endcan
             </div>
             <div class="card-body px-0">
                 <div class="table-responsive">
@@ -108,7 +110,8 @@
                                     </td>
                                     <td>
                                         <div class="flex align-items-center list-user-action">
-                                            <button class="btn btn-sm btn-icon btn-warning" data-bs-toggle="modal" data-bs-target="#editUsuarioModal{{ $usuario->id }}" title="Editar">
+                                            @can('usuarios.update')
+<button class="btn btn-sm btn-icon btn-warning" data-bs-toggle="modal" data-bs-target="#editUsuarioModal{{ $usuario->id }}" title="Editar">
                                                 <span class="btn-inner">
                                                     <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                         <path d="M11.4925 2.78906H7.75349C4.67849 2.78906 2.75049 4.96606 2.75049 8.04806V16.3621C2.75049 19.4441 4.66949 21.6211 7.75349 21.6211H16.5775C19.6625 21.6211 21.5815 19.4441 21.5815 16.3621V12.3341" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -117,6 +120,7 @@
                                                     </svg>
                                                 </span>
                                             </button>
+@endcan
                                             
                                             @if($usuario->estado == 1)
                                                 <button type="button" class="btn btn-sm btn-icon btn-danger" data-bs-toggle="modal" data-bs-target="#deleteUsuarioModal{{ $usuario->id }}" title="Desactivar">

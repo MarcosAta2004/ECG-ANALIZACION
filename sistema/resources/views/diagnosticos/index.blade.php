@@ -44,12 +44,52 @@
                     <h4 class="card-title">Lista de Diagnósticos</h4>
                     <p class="mb-0 text-muted small">Valoraciones registradas por el cardiólogo</p>
                 </div>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createDiagnosticoModal">
-                    <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Nuevo Diagnóstico
-                </button>
+                @can('diagnosticos.store')
+                <div class="d-flex gap-2 align-items-center">
+                    <button class="btn {{ $estudios->count() > 0 ? 'btn-warning text-dark fw-semibold' : 'btn-primary' }} position-relative" data-bs-toggle="modal" data-bs-target="#createDiagnosticoModal">
+                        @if($estudios->count() > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="z-index: 10;">
+                                {{ $estudios->count() }}
+                            </span>
+                            <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="me-1">
+                                <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Pendientes por Valorar
+                        @else
+                            <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="me-1">
+                                <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Nuevo Diagnóstico
+                        @endif
+                    </button>
+                </div>
+                @endcan
+            </div>
+
+            {{-- Barra de búsqueda --}}
+            <div class="card-body border-bottom pb-3">
+                <form method="GET" action="{{ route('diagnosticos.index') }}" class="d-flex gap-2 align-items-center">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <svg width="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 15.4183 19 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <input type="text" class="form-control border-start-0 ps-0" name="search"
+                            value="{{ request('search') }}"
+                            placeholder="Buscar por código de paciente..."
+                            autocomplete="off">
+                        @if(request('search'))
+                            <a href="{{ route('diagnosticos.index') }}" class="btn btn-outline-secondary" title="Limpiar búsqueda">
+                                <svg width="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </a>
+                        @endif
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                    </div>
+                </form>
             </div>
 
             <div class="card-body px-0">
@@ -135,6 +175,7 @@
                                     <td class="text-center">
                                         <div class="d-flex align-items-center justify-content-center gap-1 list-user-action">
                                             {{-- Editar --}}
+                                            @can('diagnosticos.update')
                                             <button class="btn btn-sm btn-icon btn-warning"
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#editDiagnosticoModal{{ $diagnostico->diagnostico_id }}"
@@ -147,7 +188,9 @@
                                                     </svg>
                                                 </span>
                                             </button>
+                                            @endcan
 
+                                            @can('diagnosticos.activar')
                                             @if($diagnostico->estado == 1)
                                                 <button type="button" class="btn btn-sm btn-icon btn-danger"
                                                         data-bs-toggle="modal"
@@ -174,6 +217,7 @@
                                                     </span>
                                                 </button>
                                             @endif
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>
