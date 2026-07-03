@@ -549,9 +549,8 @@ class MenuPrincipalController extends Controller
         $arritmias        = Prediccion::whereHas('ritmo', fn($q) => $q->where('label', '!=', 'NORM'))
                                       ->where($queryFilter)->count();
 
-        // Pendientes: estudios activos con imagen+predicción pero sin diagnóstico médico
+        // Pendientes: estudios activos sin diagnóstico médico
         $pendientes = Estudio::where('estado', 1)
-            ->whereHas('imagen.prediccion')
             ->doesntHave('diagnostico')
             ->where($queryFilter)
             ->count();

@@ -33,9 +33,9 @@ class DiagnosticoTest extends TestCase
         $response->assertSessionHas('ok', 'enabled');
 
         $this->assertDatabaseHas('diagnosticos', [
-            'estudio_id' => $estudio->estudio_id,
-            'ritmo_id'   => $ritmo->ritmo_id,
-            'medico_id'  => $medico->id,
+            'estudio_id'     => $estudio->estudio_id,
+            'ritmo_id'       => $ritmo->ritmo_id,
+            'registrado_por' => $medico->id,
         ]);
     }
 

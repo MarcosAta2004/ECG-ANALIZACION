@@ -42,6 +42,20 @@ class PacienteController extends Controller
         return view('pacientes.show', compact('paciente'));
     }
 
+    public function searchJson(Request $request)
+    {
+        $query = Paciente::where('estado', 1);
+
+        if ($request->filled('search')) {
+            $searchTerm = trim($request->input('search'));
+            $query->where('codigo_generado', 'like', '%' . $searchTerm . '%');
+        }
+
+        $pacientes = $query->orderBy('paciente_id', 'desc')->paginate(5);
+
+        return response()->json($pacientes);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -66,11 +80,12 @@ class PacienteController extends Controller
         $paciente->estado           = $request->has('estado') ? 1 : 0;
         $paciente->save();
 
-        return redirect()->route('pacientes.index')->with([
+        return redirect()->back()->with([
             'ok'      => 'enabled',
             'message' => 'Se acaba de registrar correctamente el paciente',
             'alert'   => 'success',
             'data'    => $paciente->codigo_generado,
+            'open_buscar_paciente_modal' => true,
         ]);
     }
 

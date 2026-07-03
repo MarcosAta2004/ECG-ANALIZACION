@@ -97,6 +97,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::controller(PacienteController::class)->prefix('pacientes')->group(function () {
             Route::get('/', 'index')->name('pacientes.index');
+            Route::get('search-json', 'searchJson')->name('pacientes.searchJson');
             Route::post('store', 'store')->name('pacientes.store');
             Route::get('show/{paciente}', 'show')->name('pacientes.show');
             Route::put('update/{paciente}', 'update')->name('pacientes.update');
@@ -129,6 +130,7 @@ Route::middleware(['auth'])->group(function () {
             Route::put('activar/{imagen}', 'activar')->name('imagenes.activar');
             Route::get('{imagen}/ver-ecg', 'verEcg')->name('imagenes.ecg.ver');
             Route::get('{imagen}/descargar-ecg', 'descargarEcg')->name('imagenes.ecg.download');
+            Route::get('show/{codigoPaciente}', 'show')->name('imagenes.show');
 
             // Procesamiento de IA
             Route::post('analyze', 'analyze')->name('imagenes.analyze');
@@ -137,6 +139,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::controller(PrediccionController::class)->prefix('predicciones')->group(function () {
             Route::get('/', 'index')->name('predicciones.index');
+            Route::get('show/{codigoPaciente}', 'show')->name('predicciones.show');
             Route::delete('delete/{prediccion}', 'destroy')->name('predicciones.destroy');
             Route::put('activar/{prediccion}', 'activar')->name('predicciones.activar');
         });

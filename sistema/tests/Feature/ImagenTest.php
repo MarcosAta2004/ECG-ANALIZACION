@@ -33,7 +33,7 @@ class ImagenTest extends TestCase
             'archivo'    => $archivo,
         ]);
 
-        $response->assertRedirect(route('upload'));
+        $response->assertRedirect(route('imagenes.index'));
         $response->assertSessionHas('ok', 'enabled');
 
         $this->assertDatabaseHas('imagenes', [
@@ -55,7 +55,7 @@ class ImagenTest extends TestCase
             'archivo'    => $archivo,
         ]);
 
-        $response->assertRedirect(route('upload'));
+        $response->assertRedirect(route('imagenes.index'));
         $this->assertDatabaseHas('imagenes', [
             'estudio_id' => $estudio->estudio_id,
             'formato'    => 'jpg',
@@ -136,7 +136,7 @@ class ImagenTest extends TestCase
 
         $response = $this->delete(route('imagenes.destroy', $imagen));
 
-        $response->assertRedirect(route('upload'));
+        $response->assertRedirect(route('imagenes.index'));
         $imagen->refresh();
         $this->assertEquals(0, $imagen->estado);
         $this->assertDatabaseHas('imagenes', ['imagen_id' => $imagen->imagen_id]);
@@ -150,7 +150,7 @@ class ImagenTest extends TestCase
 
         $response = $this->put(route('imagenes.activar', $imagen));
 
-        $response->assertRedirect(route('upload'));
+        $response->assertRedirect(route('imagenes.index'));
         $imagen->refresh();
         $this->assertEquals(1, $imagen->estado);
     }

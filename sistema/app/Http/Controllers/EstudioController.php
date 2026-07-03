@@ -102,7 +102,7 @@ class EstudioController extends Controller
 
     public function index(Request $request)
     {
-        $query = Estudio::with(['paciente', 'registradoPor']);
+        $query = Estudio::with(['paciente', 'registradoPor', 'imagen']);
 
         if ($request->filled('search')) {
             $searchTerm = trim($request->input('search'));
@@ -116,10 +116,11 @@ class EstudioController extends Controller
 
         $estudios = $query->orderBy('estudio_id', 'desc')->paginate(10);
         $pacientes = Paciente::where('estado', 1)->get();
+        $prefijos = \App\Models\PrefijoPaciente::where('estado', 1)->get();
 
         $estudios->appends(['search' => $request->input('search')]);
 
-        return view('estudios.index', compact('estudios', 'pacientes'));
+        return view('estudios.index', compact('estudios', 'pacientes', 'prefijos'));
     }
 
     public function store(Request $request)

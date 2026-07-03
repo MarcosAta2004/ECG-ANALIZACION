@@ -20,13 +20,12 @@ class DiagnosticoFactory extends Factory
         return [
             'estudio_id'     => Estudio::factory(),
             'ritmo_id'       => RitmoCardiaco::factory(),
-            'medico_id'      => User::factory()->create([
+            'registrado_por' => User::factory()->create([
                 'login'  => 'medico_' . uniqid(),
                 'email'  => 'medico_' . uniqid() . '@ecg.test',
                 'estado' => 1,
             ])->id,
             'concordancia'   => $this->faker->boolean(),
-            'descripcion'    => $this->faker->sentence(5),
             'observacion'    => $this->faker->optional()->paragraph(),
             'fecha_revision' => now(),
             'estado'         => 1,

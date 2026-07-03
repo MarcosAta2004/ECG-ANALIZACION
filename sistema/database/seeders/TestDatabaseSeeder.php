@@ -55,17 +55,10 @@ class TestDatabaseSeeder extends Seeder
         DB::table('ritmos_cardiacos')->insertOrIgnore([
             ['ritmo_id' => 1, 'grupo_id' => 1, 'nivel_id' => 1, 'clasificacion_id' => 1, 'label' => 'NORM',  'nombre' => 'Ritmo Sinusal Normal',           'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['ritmo_id' => 2, 'grupo_id' => 2, 'nivel_id' => 2, 'clasificacion_id' => 2, 'label' => '1AVB',  'nombre' => 'Bloqueo AV de primer grado',      'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['ritmo_id' => 3, 'grupo_id' => 2, 'nivel_id' => 2, 'clasificacion_id' => 2, 'label' => 'WPW',   'nombre' => 'Sindrome de Wolff-Parkinson-White','estado' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['ritmo_id' => 4, 'grupo_id' => 3, 'nivel_id' => 2, 'clasificacion_id' => 2, 'label' => 'PVC',   'nombre' => 'Complejo ventricular prematuro',   'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['ritmo_id' => 5, 'grupo_id' => 3, 'nivel_id' => 2, 'clasificacion_id' => 2, 'label' => 'PAC',   'nombre' => 'Complejo auricular prematuro',    'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['ritmo_id' => 6, 'grupo_id' => 4, 'nivel_id' => 3, 'clasificacion_id' => 2, 'label' => 'AFIB',  'nombre' => 'Fibrilacion Auricular',           'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['ritmo_id' => 7, 'grupo_id' => 1, 'nivel_id' => 2, 'clasificacion_id' => 2, 'label' => 'STACH', 'nombre' => 'Taquicardia Sinusal',             'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['ritmo_id' => 8, 'grupo_id' => 1, 'nivel_id' => 1, 'clasificacion_id' => 1, 'label' => 'SARRH', 'nombre' => 'Arritmia Sinusal',               'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['ritmo_id' => 9, 'grupo_id' => 1, 'nivel_id' => 1, 'clasificacion_id' => 1, 'label' => 'SBRAD', 'nombre' => 'Bradicardia Sinusal',            'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['ritmo_id' =>10, 'grupo_id' => 4, 'nivel_id' => 2, 'clasificacion_id' => 2, 'label' => 'SVARR', 'nombre' => 'Arritmia Supraventricular',      'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['ritmo_id' =>11, 'grupo_id' => 3, 'nivel_id' => 2, 'clasificacion_id' => 2, 'label' => 'BIGU',  'nombre' => 'Bigeminismo',                    'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['ritmo_id' =>12, 'grupo_id' => 4, 'nivel_id' => 3, 'clasificacion_id' => 2, 'label' => 'AFLT',  'nombre' => 'Flutter Auricular',              'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['ritmo_id' =>13, 'grupo_id' => 4, 'nivel_id' => 2, 'clasificacion_id' => 2, 'label' => 'PSVT',  'nombre' => 'Taquicardia supraventricular paroxistica', 'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['ritmo_id' => 9, 'grupo_id' => 1, 'nivel_id' => 1, 'clasificacion_id' => 2, 'label' => 'SBRAD', 'nombre' => 'Bradicardia Sinusal',            'estado' => 1, 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         // 7. Prefijo base para tests

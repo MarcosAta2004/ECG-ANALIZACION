@@ -184,9 +184,13 @@
                                                 </svg>
                                                 Ver reporte
                                             </button>
-                                        @else
+                                        @elseif($estudio->imagen)
                                             <span class="badge bg-warning text-dark" style="font-size: 0.75rem;">
                                                 ⏳ Esperando Diagnóstico
+                                            </span>
+                                        @else
+                                            <span class="badge bg-info text-white" style="font-size: 0.75rem;">
+                                                ⏳ Esperando Predicción
                                             </span>
                                         @endif
                                     </td>
@@ -390,12 +394,11 @@
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="form-label">Paciente <span class="text-danger">*</span></label>
-                            <select class="form-control" name="paciente_id" id="pacienteSelect" required>
-                                <option value="">Seleccione un paciente...</option>
-                                @foreach($pacientes as $paciente)
-                                    <option value="{{ $paciente->paciente_id }}" data-fecha-nacimiento="{{ $paciente->fecha_nacimiento }}" {{ old('paciente_id') == $paciente->paciente_id ? 'selected' : '' }}>{{ $paciente->codigo_generado }}</option>
-                                @endforeach
-                            </select>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="pacienteInputDisplay" placeholder="Seleccione un paciente..." readonly required>
+                                <input type="hidden" name="paciente_id" id="pacienteIdInput" required>
+                                <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#buscarPacienteModal" onclick="cargarPacientes(1)">Buscar persona</button>
+                            </div>
                         </div>
                         
                         <div class="col-md-12 form-group">
@@ -425,6 +428,113 @@
     </div>
 </div>
 
+<!-- Modal Buscar Paciente -->
+<div class="modal fade" id="buscarPacienteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Buscar Paciente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex gap-2 mb-3">
+                    <div class="input-group flex-grow-1">
+                        <input type="text" id="buscarPacienteInput" class="form-control" placeholder="Buscar por código..." autocomplete="off">
+                        <button class="btn btn-primary" type="button" onclick="cargarPacientes(1)">Buscar</button>
+                    </div>
+                    @can('pacientes.store')
+                    <button class="btn btn-success text-nowrap" type="button" data-bs-toggle="modal" data-bs-target="#createPacienteModal">
+                        Registrar
+                    </button>
+                    @endcan
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th class="text-end">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaPacientesBody">
+                            <!-- Llenado por AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div id="infoResultadosPacientes" class="text-muted small"></div>
+                    <div id="paginacionPacientes" class="d-flex gap-2">
+                        <!-- Paginación AJAX -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Paciente Modal -->
+<div class="modal fade" id="createPacienteModal" tabindex="-1" aria-labelledby="createPacienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('pacientes.store') }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createPacienteModalLabel">Añadir Nuevo Paciente Anónimo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info d-flex align-items-center mb-3" role="alert">
+                        <svg class="bi flex-shrink-0 me-2" width="24" height="24"><use xlink:href="#info-fill"/></svg>
+                        <div>
+                            El código del paciente se generará automáticamente usando el prefijo seleccionado.
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="form-label">Prefijo <span class="text-danger">*</span></label>
+                            <select class="form-control" name="prefijo_id" required>
+                                <option value="">Seleccione un prefijo...</option>
+                                @foreach($prefijos as $prefijo)
+                                    <option value="{{ $prefijo->prefijo_id }}" {{ old('prefijo_id') == $prefijo->prefijo_id ? 'selected' : '' }}>{{ $prefijo->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 form-group">
+                            <label class="form-label">Fecha de Nacimiento</label>
+                            <input type="date" class="form-control" name="fecha_nacimiento" value="{{ old('fecha_nacimiento') }}" max="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="form-label">Sexo</label>
+                            <select class="form-control" name="sexo">
+                                <option value="">Seleccione...</option>
+                                <option value="M" {{ old('sexo') == 'M' ? 'selected' : '' }}>Masculino</option>
+                                <option value="F" {{ old('sexo') == 'F' ? 'selected' : '' }}>Femenino</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="form-label">Peso (kg)</label>
+                            <input type="number" class="form-control" name="peso" value="{{ old('peso') }}" step="0.01" min="0" max="300" placeholder="Ej. 70.5">
+                        </div>
+                        
+                        <div class="col-md-12 form-group">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="estadoCreatePaciente" name="estado" value="1" checked>
+                                <label class="form-check-label" for="estadoCreatePaciente">Paciente Activo</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Registrar Paciente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Ver Observaciones -->
 <div class="modal fade" id="verObservacionModal" tabindex="-1" aria-labelledby="verObservacionModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -446,6 +556,80 @@
 </div>
 
 <script>
+    function cargarPacientes(page = 1) {
+        let search = document.getElementById('buscarPacienteInput').value;
+        let url = `{{ route('pacientes.searchJson') }}?page=${page}&search=${encodeURIComponent(search)}`;
+        
+        let tbody = document.getElementById('tablaPacientesBody');
+        let infoDiv = document.getElementById('infoResultadosPacientes');
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                if(data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2" class="text-center">No se encontraron pacientes</td></tr>';
+                    document.getElementById('paginacionPacientes').innerHTML = '';
+                    infoDiv.innerHTML = '';
+                    return;
+                }
+                
+                data.data.forEach(paciente => {
+                    let tr = document.createElement('tr');
+                    let fechaNac = paciente.fecha_nacimiento ? paciente.fecha_nacimiento : '';
+                    tr.innerHTML = `
+                        <td>${paciente.codigo_generado}</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-success" 
+                                onclick="seleccionarPaciente(${paciente.paciente_id}, '${paciente.codigo_generado}', '${fechaNac}')">
+                                Seleccionar
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                
+                infoDiv.innerHTML = `${data.from} a ${data.to} de ${data.total} resultados`;
+                
+                // Generar paginación simple
+                let pagination = '';
+                if(data.prev_page_url) {
+                    pagination += `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="cargarPacientes(${data.current_page - 1})">Anterior</button>`;
+                }
+                if(data.next_page_url) {
+                    pagination += `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="cargarPacientes(${data.current_page + 1})">Siguiente</button>`;
+                }
+                document.getElementById('paginacionPacientes').innerHTML = pagination;
+            });
+    }
+
+    function seleccionarPaciente(id, codigo, fechaNacimiento) {
+        document.getElementById('pacienteIdInput').value = id;
+        document.getElementById('pacienteInputDisplay').value = codigo;
+        
+        // Auto-calcular edad
+        var edadInput = document.getElementById('edadInput');
+        if (fechaNacimiento && fechaNacimiento !== 'null') {
+            var dob = new Date(fechaNacimiento);
+            var today = new Date();
+            var age = today.getFullYear() - dob.getFullYear();
+            var m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            edadInput.value = age;
+        } else {
+            edadInput.value = '';
+        }
+        
+        // Cerrar modal de búsqueda
+        bootstrap.Modal.getInstance(document.getElementById('buscarPacienteModal')).hide();
+        
+        // Abrir/asegurar que el modal de creación de estudio esté visible
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('createEstudioModal')).show();
+    }
+
     function verObservacion(estudioId) {
         var modal = new bootstrap.Modal(document.getElementById('verObservacionModal'));
         var contentDiv = document.getElementById('observacionContent');
@@ -492,30 +676,14 @@
                 reporteEstudio.textContent = '';
             });
         }
-
-        // Auto-calcular edad basada en el paciente seleccionado
-        var pacienteSelect = document.getElementById('pacienteSelect');
-        var edadInput = document.getElementById('edadInput');
         
-        if(pacienteSelect && edadInput) {
-            pacienteSelect.addEventListener('change', function() {
-                var selectedOption = this.options[this.selectedIndex];
-                var fechaNacimiento = selectedOption.getAttribute('data-fecha-nacimiento');
-                
-                if (fechaNacimiento) {
-                    var dob = new Date(fechaNacimiento);
-                    var today = new Date();
-                    var age = today.getFullYear() - dob.getFullYear();
-                    var m = today.getMonth() - dob.getMonth();
-                    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
-                        age--;
-                    }
-                    edadInput.value = age;
-                } else {
-                    edadInput.value = '';
-                }
-            });
-        }
+        @if(session('open_buscar_paciente_modal'))
+            var bsBuscarModal = new bootstrap.Modal(document.getElementById('buscarPacienteModal'));
+            bsBuscarModal.show();
+            document.getElementById('buscarPacienteModal').addEventListener('shown.bs.modal', function () {
+                cargarPacientes(1);
+            }, {once:true});
+        @endif
     });
 </script>
 

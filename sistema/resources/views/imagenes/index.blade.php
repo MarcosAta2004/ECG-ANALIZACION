@@ -61,6 +61,41 @@
                         <h4 class="card-title">Lista de Imágenes</h4>
                     </div>
                 </div>
+
+                {{-- Barra de búsqueda --}}
+                <div class="card-body border-bottom pb-3">
+                    <form method="GET" action="{{ route('imagenes.index') }}" class="d-flex gap-2 align-items-center">
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0">
+                                <svg width="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 15.4183 19 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            <input type="text" class="form-control border-start-0 ps-0" name="search"
+                                value="{{ request('search') }}"
+                                placeholder="Buscar por código de paciente..."
+                                autocomplete="off">
+                            @if(request('search'))
+                                <a href="{{ route('imagenes.index') }}" class="btn btn-outline-secondary" title="Limpiar búsqueda">
+                                    <svg width="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </a>
+                            @endif
+                            <button type="submit" class="btn btn-primary">Buscar</button>
+                        </div>
+                    </form>
+                    @if(request('search'))
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                Mostrando resultados para: <strong>"{{ request('search') }}"</strong>
+                                — {{ $imagenes->total() }} resultado(s) encontrado(s).
+                            </small>
+                        </div>
+                    @endif
+                </div>
+
                 <div class="card-body px-0">
                     <div class="table-responsive">
                         <table class="table table-striped mb-0" role="grid">

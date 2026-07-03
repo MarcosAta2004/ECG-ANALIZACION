@@ -42,6 +42,11 @@ class PrediccionController extends Controller
         return view('predicciones.index', compact('predicciones'));
     }
 
+    public function show($codigoPaciente)
+    {
+        return redirect()->route('predicciones.index', ['search' => $codigoPaciente]);
+    }
+
     public function destroy(Prediccion $prediccion)
     {
         $prediccion->estado = 0;

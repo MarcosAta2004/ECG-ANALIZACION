@@ -32,7 +32,7 @@ class PacienteTest extends TestCase
         $user   = $this->loginComo('tecnico');
         $prefijo = PrefijoPaciente::find(1); // sembrado en TestDatabaseSeeder
 
-        $response = $this->post(route('pacientes.store'), [
+        $response = $this->from(route('pacientes.index'))->post(route('pacientes.store'), [
             'prefijo_id'       => $prefijo->prefijo_id,
             'fecha_nacimiento' => '1990-05-15',
             'sexo'             => 'M',
@@ -51,7 +51,7 @@ class PacienteTest extends TestCase
         // El código generado debe tener el formato correcto
         $paciente = Paciente::latest('paciente_id')->first();
         $this->assertMatchesRegularExpression(
-            '/^TEST-\d{4}-\d{3}$/',
+            '/^TEST_\d{8}_\d{3}$/',
             $paciente->codigo_generado
         );
     }

@@ -21,9 +21,24 @@ class ImagenController extends Controller
     public function index(Request $request)
     {
         $query = Imagen::with(['estudio.paciente']);
+
+        if ($request->filled('search')) {
+            $searchTerm = trim($request->input('search'));
+            $query->whereHas('estudio.paciente', function ($q) use ($searchTerm) {
+                $q->where('codigo_generado', 'like', '%' . $searchTerm . '%');
+            });
+        }
+
         $imagenes = $query->orderBy('imagen_id', 'desc')->paginate(10);
+        $imagenes->appends(['search' => $request->input('search')]);
+
         $estudiosDisponibles = Estudio::doesntHave('imagen')->with('paciente')->where('estado', 1)->get();
         return view('imagenes.index', compact('imagenes', 'estudiosDisponibles'));
+    }
+
+    public function show($codigoPaciente)
+    {
+        return redirect()->route('imagenes.index', ['search' => $codigoPaciente]);
     }
 
     public function upload(Request $request)
@@ -70,7 +85,7 @@ class ImagenController extends Controller
         if ($request->wantsJson()) { return response()->json(['success' => true, 'imagen_id' => $imagen->imagen_id]); } return redirect()->route('imagenes.index')->with(['ok' => 'enabled', 'message' => 'Se acaba de cargar correctamente la imagen ECG del estudio', 'alert' => 'success', 'data' => $imagen->estudio->paciente->codigo_generado, 'autoOpenImageId' => $imagen->imagen_id]);
     }
 
-    public function destroy(Imagen $imagen)
+    public function destroy(Request $request, Imagen $imagen)
     {
         $imagen->estado = 0;
         $imagen->save();
@@ -78,7 +93,7 @@ class ImagenController extends Controller
         if ($request->wantsJson()) { return response()->json(['success' => true, 'imagen_id' => $imagen->imagen_id]); } return redirect()->route('imagenes.index')->with(['ok' => 'enabled', 'message' => 'Se acaba de cargar correctamente la imagen ECG del estudio', 'alert' => 'success', 'data' => $imagen->estudio->paciente->codigo_generado]);
     }
 
-    public function activar(Imagen $imagen)
+    public function activar(Request $request, Imagen $imagen)
     {
         $imagen->estado = 1;
         $imagen->save();
@@ -252,7 +267,7 @@ class ImagenController extends Controller
     {
         if ($imagen->prediccion) {
             return response()->json([
-                'error' => 'Esta imagen ya tiene una predicci+�n registrada.',
+                'error' => 'Esta imagen ya tiene una predicción registrada.',
             ], 409);
         }
 
@@ -274,7 +289,7 @@ class ImagenController extends Controller
                 ]);
 
             if ($response->failed()) {
-                $msg = 'Error al conectar con el servidor de analisis.';
+                $msg = 'Error al conectar con el servidor de análisis.';
                 $body = $response->json();
                 
                 if ($body) {
@@ -285,7 +300,7 @@ class ImagenController extends Controller
                             $loc = implode('.', $error['loc'] ?? []);
                             $errors[] = $loc . ': ' . ($error['msg'] ?? '');
                         }
-                        $msg = 'Error de validaci+�n en la IA: ' . implode(', ', $errors);
+                        $msg = 'Error de validación en la IA: ' . implode(', ', $errors);
                     }
                 }
                 return response()->json(['error' => $msg], 502);
@@ -294,8 +309,8 @@ class ImagenController extends Controller
             $data = $response->json();
             $tiempo_ms = (int) $inicio->diffInMilliseconds(now());
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Excepci+�n en ImagenController: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return response()->json(['error' => 'Error de conexi+�n con el servidor de an+�lisis: ' . $e->getMessage()], 502);
+            \Illuminate\Support\Facades\Log::error('Excepción en ImagenController: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['error' => 'Error de conexión con el servidor de análisis: ' . $e->getMessage()], 502);
         }
 
         $labelCode = $data['top_predictions'][0]['code'] ?? 'NORM';
@@ -303,7 +318,7 @@ class ImagenController extends Controller
 
         if (! $ritmo) {
             return response()->json([
-                'error' => "El c+�digo '{$labelCode}' devuelto por el modelo no existe en el cat+�logo de ritmos.",
+                'error' => "El código '{$labelCode}' devuelto por el modelo no existe en el catálogo de ritmos.",
             ], 422);
         }
 
@@ -322,7 +337,7 @@ class ImagenController extends Controller
             modulo: 'predicciones',
             entidad: 'predicciones',
             entidadId: $prediccion->prediccion_id,
-            descripcion: 'An+�lisis ECG ejecutado por modelo CNN-LSTM v+�a FastAPI.',
+            descripcion: 'Análisis ECG ejecutado por modelo CNN-LSTM vía FastAPI.',
             valoresAnteriores: null,
             valoresNuevos: [
                 'imagen_id'    => $imagen->imagen_id,
@@ -333,7 +348,7 @@ class ImagenController extends Controller
         );
 
         return response()->json([
-            'message' => 'An+�lisis completado correctamente.',
+            'message' => 'Análisis completado correctamente.',
             'prediccion_id' => $prediccion->prediccion_id,
             'patient_id' => $paciente->paciente_id,
             'patient_code' => $paciente->codigo_generado,
@@ -348,9 +363,6 @@ class ImagenController extends Controller
             'signals' => $data['signals'] ?? null,
         ]);
     }
+
+
 }
-
-
-
-
-

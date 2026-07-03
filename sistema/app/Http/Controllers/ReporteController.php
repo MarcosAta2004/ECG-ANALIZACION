@@ -30,7 +30,7 @@ class ReporteController extends Controller
                 ];
             });
 
-        $stats = [
+        $reportStats = [
             'patients' => \App\Models\Paciente::has('estudios')->count(),
             'analyses' => \App\Models\Imagen::count(),
             'official_reports' => Estudio::whereHas('diagnostico')->count(),
@@ -67,7 +67,7 @@ class ReporteController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('reportes.index', compact('patients', 'stats', 'estudios'));
+        return view('reportes.index', compact('patients', 'reportStats', 'estudios'));
     }
 
     public function download(Request $request)

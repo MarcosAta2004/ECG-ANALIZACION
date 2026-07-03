@@ -35,7 +35,7 @@
             <div class="card">
                 <div class="card-body">
                     <p class="text-muted mb-1">Pacientes registrados</p>
-                    <h3 class="mb-0">{{ number_format($stats['patients']) }}</h3>
+                    <h3 class="mb-0">{{ number_format($reportStats['patients']) }}</h3>
                 </div>
             </div>
         </div>
@@ -43,7 +43,7 @@
             <div class="card">
                 <div class="card-body">
                     <p class="text-muted mb-1">Analisis disponibles</p>
-                    <h3 class="mb-0">{{ number_format($stats['analyses']) }}</h3>
+                    <h3 class="mb-0">{{ number_format($reportStats['analyses']) }}</h3>
                 </div>
             </div>
         </div>
@@ -51,7 +51,7 @@
             <div class="card">
                 <div class="card-body">
                     <p class="text-muted mb-1">Reportes oficiales</p>
-                    <h3 class="mb-0">{{ number_format($stats['official_reports']) }}</h3>
+                    <h3 class="mb-0">{{ number_format($reportStats['official_reports']) }}</h3>
                 </div>
             </div>
         </div>
