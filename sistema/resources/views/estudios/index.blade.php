@@ -18,7 +18,7 @@
 {{-- Alertas de Éxito, Advertencia o Información --}}
 @if(session('message'))
     @php
-        $status = session('status', 'info'); 
+        $status = session('status', 'info');
         $alertClass = 'alert-info';
         $icon = 'info-fill';
 
@@ -131,7 +131,7 @@
                                 <th>Paciente</th>
                                 <th>Registrado Por</th>
                                 <th>Edad (Años)</th>
-                                <th>Observaciones</th>
+                                {{-- <th>Observaciones</th> --}}
                                 <th>Estado</th>
                                 <th class="text-center">Reporte Oficial</th> <th style="min-width: 100px">Acciones</th>
                             </tr>
@@ -149,7 +149,7 @@
                                         @endif
                                     </td>
                                     <td>{{ $estudio->edad ? $estudio->edad . ' años' : '-' }}</td>
-                                    <td>
+                                    {{-- <td>
                                         @if($estudio->observaciones)
                                             <button type="button" class="btn btn-sm btn-outline-info" onclick="verObservacion({{ $estudio->estudio_id }})">
                                                 Ver Nota
@@ -157,7 +157,7 @@
                                         @else
                                             -
                                         @endif
-                                    </td>
+                                    </td> --}}
                                     <td>
                                         @if($estudio->estado == 1)
                                             <span class="badge bg-success">Activo</span>
@@ -184,7 +184,7 @@
                                                 </svg>
                                                 Ver reporte
                                             </button>
-                                        @elseif($estudio->imagen)
+                                        @elseif($estudio->imagen && $estudio->imagen->prediccion)
                                             <span class="badge bg-warning text-dark" style="font-size: 0.75rem;">
                                                 ⏳ Esperando Diagnóstico
                                             </span>
@@ -264,7 +264,7 @@
                                                             <label class="form-label">Observaciones</label>
                                                             <textarea class="form-control" name="observaciones" rows="3">{{ $estudio->observaciones }}</textarea>
                                                         </div>
-                                                        
+
                                                         <div class="col-md-12 form-group">
                                                             <div class="form-check form-switch mt-2">
                                                                 <input class="form-check-input" type="checkbox" id="estadoEdit{{ $estudio->estudio_id }}" name="estado" value="1" {{ $estudio->estado == 1 ? 'checked' : '' }}>
@@ -300,7 +300,7 @@
                                                             ¿Estás seguro que deseas <strong>desactivar</strong> este estudio del paciente <strong>{{ $estudio->paciente->codigo_generado ?? 'N/A' }}</strong>?
                                                         </div>
                                                     </div>
-                                                </div>  
+                                                </div>
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                                                     <button type="submit" class="btn btn-danger">Sí, Desactivar</button>
@@ -400,17 +400,17 @@
                                 <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#buscarPacienteModal" onclick="cargarPacientes(1)">Buscar persona</button>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-12 form-group">
                             <label class="form-label">Edad del Paciente (al momento del estudio)</label>
                             <input type="number" class="form-control" name="edad" id="edadInput" value="{{ old('edad') }}" min="0" max="120" placeholder="Ej. 45">
                         </div>
-                        
+
                         <div class="col-md-12 form-group">
                             <label class="form-label">Observaciones</label>
                             <textarea class="form-control" name="observaciones" rows="3">{{ old('observaciones') }}</textarea>
                         </div>
-                        
+
                         <div class="col-md-12 form-group">
                             <div class="form-check form-switch mt-2">
                                 <input class="form-check-input" type="checkbox" id="estadoCreate" name="estado" value="1" checked>
@@ -500,7 +500,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        
+
                         <div class="col-md-6 form-group">
                             <label class="form-label">Fecha de Nacimiento</label>
                             <input type="date" class="form-control" name="fecha_nacimiento" value="{{ old('fecha_nacimiento') }}" max="{{ date('Y-m-d') }}">
@@ -517,7 +517,7 @@
                             <label class="form-label">Peso (kg)</label>
                             <input type="number" class="form-control" name="peso" value="{{ old('peso') }}" step="0.01" min="0" max="300" placeholder="Ej. 70.5">
                         </div>
-                        
+
                         <div class="col-md-12 form-group">
                             <div class="form-check form-switch mt-2">
                                 <input class="form-check-input" type="checkbox" id="estadoCreatePaciente" name="estado" value="1" checked>
@@ -559,11 +559,11 @@
     function cargarPacientes(page = 1) {
         let search = document.getElementById('buscarPacienteInput').value;
         let url = `{{ route('pacientes.searchJson') }}?page=${page}&search=${encodeURIComponent(search)}`;
-        
+
         let tbody = document.getElementById('tablaPacientesBody');
         let infoDiv = document.getElementById('infoResultadosPacientes');
         tbody.innerHTML = '<tr><td colspan="2" class="text-center"><div class="spinner-border text-primary" role="status"></div></td></tr>';
-        
+
         fetch(url)
             .then(res => res.json())
             .then(data => {
@@ -574,14 +574,14 @@
                     infoDiv.innerHTML = '';
                     return;
                 }
-                
+
                 data.data.forEach(paciente => {
                     let tr = document.createElement('tr');
                     let fechaNac = paciente.fecha_nacimiento ? paciente.fecha_nacimiento : '';
                     tr.innerHTML = `
                         <td>${paciente.codigo_generado}</td>
                         <td class="text-end">
-                            <button type="button" class="btn btn-sm btn-success" 
+                            <button type="button" class="btn btn-sm btn-success"
                                 onclick="seleccionarPaciente(${paciente.paciente_id}, '${paciente.codigo_generado}', '${fechaNac}')">
                                 Seleccionar
                             </button>
@@ -589,9 +589,9 @@
                     `;
                     tbody.appendChild(tr);
                 });
-                
+
                 infoDiv.innerHTML = `${data.from} a ${data.to} de ${data.total} resultados`;
-                
+
                 // Generar paginación simple
                 let pagination = '';
                 if(data.prev_page_url) {
@@ -607,7 +607,7 @@
     function seleccionarPaciente(id, codigo, fechaNacimiento) {
         document.getElementById('pacienteIdInput').value = id;
         document.getElementById('pacienteInputDisplay').value = codigo;
-        
+
         // Auto-calcular edad
         var edadInput = document.getElementById('edadInput');
         if (fechaNacimiento && fechaNacimiento !== 'null') {
@@ -622,10 +622,10 @@
         } else {
             edadInput.value = '';
         }
-        
+
         // Cerrar modal de búsqueda
         bootstrap.Modal.getInstance(document.getElementById('buscarPacienteModal')).hide();
-        
+
         // Abrir/asegurar que el modal de creación de estudio esté visible
         bootstrap.Modal.getOrCreateInstance(document.getElementById('createEstudioModal')).show();
     }
@@ -633,7 +633,7 @@
     function verObservacion(estudioId) {
         var modal = new bootstrap.Modal(document.getElementById('verObservacionModal'));
         var contentDiv = document.getElementById('observacionContent');
-        
+
         contentDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 mb-0">Cargando observaciones...</p></div>';
         modal.show();
 
@@ -676,7 +676,7 @@
                 reporteEstudio.textContent = '';
             });
         }
-        
+
         @if(session('open_buscar_paciente_modal'))
             var bsBuscarModal = new bootstrap.Modal(document.getElementById('buscarPacienteModal'));
             bsBuscarModal.show();

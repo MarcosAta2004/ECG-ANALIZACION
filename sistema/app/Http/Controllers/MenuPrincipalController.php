@@ -551,6 +551,7 @@ class MenuPrincipalController extends Controller
 
         // Pendientes: estudios activos sin diagnóstico médico
         $pendientes = Estudio::where('estado', 1)
+            ->whereHas('imagen.prediccion')
             ->doesntHave('diagnostico')
             ->where($queryFilter)
             ->count();

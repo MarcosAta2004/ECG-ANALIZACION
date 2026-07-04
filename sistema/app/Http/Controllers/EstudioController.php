@@ -43,7 +43,7 @@ class EstudioController extends Controller
         }
 
         $history = $query->orderBy('created_at', 'desc')->paginate(10);
-        
+
         // Formatear items para Alpine.js
         $history->getCollection()->transform(function($img) {
             $prediccion = $img->prediccion;
@@ -190,13 +190,6 @@ class EstudioController extends Controller
             'message' => 'Se acaba de habilitar el estudio',
             'alert'   => 'primary',
             'data'    => $estudio->paciente->codigo_generado,
-        ]);
-    }
-
-    public function showObservacion(Estudio $estudio)
-    {
-        return response()->json([
-            'observaciones' => $estudio->observaciones ?? 'No hay observaciones registradas para este estudio.'
         ]);
     }
 }

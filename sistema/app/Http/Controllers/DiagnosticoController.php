@@ -30,9 +30,10 @@ class DiagnosticoController extends Controller
 
         $diagnosticos = $query->orderBy('diagnostico_id', 'desc')->paginate(10);
 
-        // Solo estudios activos sin diagnóstico registrado
+        // Solo estudios activos sin diagnóstico registrado y que ya pasaron por la IA
         $estudios = Estudio::with('paciente')
             ->where('estado', 1)
+            ->whereHas('imagen.prediccion')
             ->doesntHave('diagnostico')
             ->get();
 

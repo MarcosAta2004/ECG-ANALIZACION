@@ -40,7 +40,8 @@ LEADS_ORDER = ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V
 def extraer_ecg_de_pdf(pdf_path, dpi=300):
     """Extrae imagen del PDF con alta resolución"""
     print(f"[1/7] Extrayendo ECG del PDF (DPI={dpi})...")
-    imagenes = convert_from_path(pdf_path, dpi=dpi)
+    #imagenes = convert_from_path(pdf_path, dpi=dpi)
+    imagenes = convert_from_path(pdf_path, dpi=dpi, poppler_path=r'C:\xampp\poppler-24.02.0\Library\bin')
     if len(imagenes) == 0:
         raise Exception("No se pudo extraer ninguna imagen del PDF")
     img_pil = imagenes[0]
